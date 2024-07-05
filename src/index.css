@@ -1,0 +1,133 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+html,
+body {
+  font-family: 'Poppins', sans-serif;
+  @apply text-[#353535]
+}
+
+
+body::-webkit-scrollbar {
+  width: 0.4em;
+}
+
+body::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+body::-webkit-scrollbar-thumb {
+  background-color: darkgrey;
+  outline: 1px solid slategrey;
+  border-radius: 100px;
+}
+input[type="date"] {
+  cursor: pointer;
+  user-select: none;
+}
+/* Target the calendar popup */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  /* Specify background color */
+  border-radius: 2px;
+  background-color: var(--color-accent1); /* Blue color */
+  color: var(--color-label-primary);
+  cursor: pointer;
+}
+
+/* Optionally, you can style the datepicker dropdown */
+input[type="date"]::-webkit-calendar-drop-down {
+  /* Specify styles for the dropdown */
+  border: 1px solid #3498db; /* Blue border */
+  background-color: #f2f2f2; /* Light gray background */
+}
+
+.form-wrapper {
+  @apply flex flex-col mb-4 w-full gap-4
+}
+
+.select-option {
+  @apply outline-none text-[10px] md:text-[12px] text-label-secondary p-2 border border-bkg-tertiary rounded-lg cursor-pointer md:min-w-[200px] bg-bkg-secondary hover:bg-bkg-tertiary hover:border-bkg-secondary
+}
+
+.select-option option {
+  @apply p-2 cursor-pointer bg-bkg-secondary
+}
+
+.operation {
+  @apply flex gap-4
+}
+
+.customize-table {
+  --easy-table-border: 1px solid var(--color-bkg-tertiary);
+  --easy-table-header-font-size: 14px;
+  --easy-table-header-background-color: var(--color-bkg-secondary);
+  --easy-table-header-font-color: var(--color-accent1);
+  --easy-table-header-height: 40px;
+  --easy-table-header-item-padding: 16px 24px;
+
+  --easy-table-body-row-font-size: 14px;
+  --easy-table-row-border: 1px solid var(--color-bkg-secondary);
+  --easy-table-body-row-background-color: var(--color-bkg-primary);
+  --easy-table-body-row-font-color: var(--color-label-primary);
+  --easy-table-body-row-height: 46px;
+  --easy-table-body-item-padding: 0px 24px;
+
+  --easy-table-body-row-hover-font-color: var(--color-label-primary);
+  --easy-table-body-row-hover-background-color: var(--color-bkg-secondary);
+
+  --easy-table-footer-font-size: 12px;
+  --easy-table-footer-height: 40px;
+  --easy-table-footer-background-color: var(--color-bkg-primary);
+  --easy-table-footer-font-color: var(--color-label-secondary);
+  --easy-table-message-font-color: var(--color-label-primary);
+}
+
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* 
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-background-clip: text;
+  color: #B6B6B6;
+  transition: background-color 5000s ease-in-out 0s;
+  box-shadow: inset 0 0 20px 20px transparent;
+} */
+
+@layer base {
+
+  :root[data-theme="light"] {
+    --color-bkg-base: #FAFAFA;
+    --color-bkg-primary: #FFFFFF;
+    --color-bkg-secondary: #F7F8FA;
+    --color-bkg-tertiary: #F2F2F7;
+    --color-label-primary: #353535;
+    --color-label-secondary: #B6B6B6;
+    --color-label-tertiary: #ECEBEB;
+    --color-content: 210deg 40% 38%;
+    --color-accent1: #015A6A;
+    --color-accent2: #D9683C;
+    --color-red-accent: #E63946;
+    --color-green-accent: #57C09B;
+    --color-blue-accent: #2482E6;
+  }
+
+  :root[data-theme="dark"] {
+    --color-bkg-base: #000000;
+    --color-bkg-primary: #1C1C1E;
+    --color-bkg-secondary: #2C2C2E;
+    --color-bkg-tertiary: #3A3A3C;
+    --color-label-primary: #F2F2F7;
+    --color-label-secondary: #69696C;
+    --color-label-tertiary: #2E2E2F;
+    --color-content: 210deg 40% 98%;
+    --color-accent1: #D9683C;
+    --color-accent2: #015A6A;
+    --color-red-accent: #E63946;
+    --color-green-accent: #57C09B;
+    --color-blue-accent: #2482E6;
+
+  }
+}

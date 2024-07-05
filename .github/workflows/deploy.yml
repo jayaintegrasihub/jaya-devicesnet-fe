@@ -30,7 +30,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@9ec57ed1fcdbf14dcef7dfbe97b2010124a938b7
         with:
-          images: sigitnurmajid/intellisense-devicesnet-fe-v2
+          images: sigitnurmajid/jaya-devicesnet-fe
       
       - name: Build and push Docker image
         uses: docker/build-push-action@3b5e8027fcad23fda98b2e3ac259d8d67585f671
@@ -55,10 +55,10 @@ jobs:
         password: ${{ secrets.SSH_PASSWORD }}
         port: ${{ secrets.SSH_PORT }}
         script: |
-          sudo docker stop sigitnurmajid-intellisense-devicesnet-fe-v2
-          sudo docker rm sigitnurmajid-intellisense-devicesnet-fe-v2
+          sudo docker stop sigitnurmajid-jaya-devicesnet-fe
+          sudo docker rm sigitnurmajid-jaya-devicesnet-fe
 
-          sudo docker rmi sigitnurmajid/intellisense-devicesnet-fe-v2:main
-          sudo docker pull sigitnurmajid/intellisense-devicesnet-fe-v2:main
+          sudo docker rmi sigitnurmajid/jaya-devicesnet-fe:main
+          sudo docker pull sigitnurmajid/jaya-devicesnet-fe:main
 
-          docker run -d -p 8080:8080 --name sigitnurmajid-intellisense-devicesnet-fe-v2 sigitnurmajid/intellisense-devicesnet-fe-v2:main
+          docker run -d -p 8080:8080 --name sigitnurmajid-jaya-devicesnet-fe sigitnurmajid/jaya-devicesnet-fe:main

@@ -61,4 +61,4 @@ jobs:
           sudo docker rmi sigitnurmajid/jaya-devicesnet-fe:main
           sudo docker pull sigitnurmajid/jaya-devicesnet-fe:main
 
-          docker run -d -p 8080:8080 --name sigitnurmajid-jaya-devicesnet-fe sigitnurmajid/jaya-devicesnet-fe:main
+          docker run -d -p 80:8080 --name sigitnurmajid-jaya-devicesnet-fe sigitnurmajid/jaya-devicesnet-fe:main

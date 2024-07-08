@@ -1,4 +1,4 @@
-name: Intellisense Devicesnet FE Deployment
+name: Jaya Devicesnet FE Deployment
 
 on:
   push:
@@ -55,10 +55,10 @@ jobs:
         password: ${{ secrets.SSH_PASSWORD }}
         port: ${{ secrets.SSH_PORT }}
         script: |
-          sudo docker stop sigitnurmajid-jaya-devicesnet-fe
-          sudo docker rm sigitnurmajid-jaya-devicesnet-fe
+          sudo docker stop jaya-devicesnet-fe
+          sudo docker rm jaya-devicesnet-fe
 
           sudo docker rmi sigitnurmajid/jaya-devicesnet-fe:main
           sudo docker pull sigitnurmajid/jaya-devicesnet-fe:main
 
-          docker run -d -p 80:8080 --name sigitnurmajid-jaya-devicesnet-fe sigitnurmajid/jaya-devicesnet-fe:main
+          docker run -d -p 8080:80 --name jaya-devicesnet-fe sigitnurmajid/jaya-devicesnet-fe:main

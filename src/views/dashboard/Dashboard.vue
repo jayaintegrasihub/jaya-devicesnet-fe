@@ -1,52 +1,133 @@
 <script setup>
-import { onMounted, onUnmounted, ref, computed } from 'vue'
+import { onMounted, onUnmounted, ref, computed, watch } from 'vue'
 import { useTelemetryStore } from '@/stores/telemetry/telemetry-store'
 import { storeToRefs } from 'pinia'
 import BaseIndicator from '@/components/indicator/BaseIndicator.vue'
 import SearchBar from '@/components/input/SearchBar.vue'
 import { useThemeStore } from '@/stores/theme'
 import SignalIndicator from '@/components/indicator/SignalIndicator.vue'
-
+import { useTenantsStore } from '@/stores/master-data/tenants-store'
+import { useLocalStorage } from '@vueuse/core'
+import { useTypesStore } from '@/stores/master-data/types-store'
 
 import { Chart, BarElement, BarController, CategoryScale, Decimation, Filler, Legend, Title, Tooltip, PointElement, LineElement, LinearScale } from 'chart.js';
 Chart.register(BarElement, BarController, CategoryScale, Decimation, Filler, Legend, Title, Tooltip, PointElement, LineElement, LinearScale)
 import { shallowRef } from 'vue'
 
 
-const themeStore = useThemeStore()
-const { isDark } = storeToRefs(useThemeStore())
+/// tenants
+const tenantStore = useTenantsStore()
+const { tenants } = storeToRefs(useTenantsStore())
+const selectedTenant = useLocalStorage('SelectedTenant', '')
 
-const delay = (time) => new Promise((resolve) => setTimeout(resolve, time))
+async function initTenantsList() {
+  await tenantStore.getTenants()
 
-const whileState = ref(true)
-const selectedTenant = ref('UBS')
+  if (tenants.value.length === 0) {
+    selectedTenant.value = 'none'
+  } else if (selectedTenant.value === '') {
+    selectedTenant.value = tenants.value[0].name
+  }
+
+}
+
+/// device types
+const typeStore = useTypesStore()
+const { type, types } = storeToRefs(useTypesStore())
+const selectedDeviceType = useLocalStorage('SelectedDeviceType', 'All')
+
+async function initTypesList() {
+  initTelemetryData()
+  await typeStore.getTypes()
+  if (selectedDeviceType.value !== 'All') {
+    let selectedType = findByName(types.value, selectedDeviceType.value)
+    await typeStore.getType(selectedType.id)
+  }
+}
+
+const findByName = (array, name) => {
+  return array.find(item => item.name === name);
+}
+
+///telemetry
 const telemetryStore = useTelemetryStore()
-const { nodesData, gatewaysData, lastUpdated, isThereOfflineDevice, offlineDevices, telemetryData, totalDevices, totalGateways, totalNodes, totalOffline, totalOnline, onlineGateways, onlineNodes, offlineGateways, offlineNodes } = storeToRefs(useTelemetryStore())
-const searchValue = ref('')
-
-
+const { isNoDevices, nodesData, gatewaysData, lastUpdated, isThereOfflineDevice, offlineDevices, telemetryData, totalDevices, totalGateways, totalNodes, totalOffline, totalOnline, onlineGateways, onlineNodes, offlineGateways, offlineNodes } = storeToRefs(useTelemetryStore())
 const groupedNodesData = ref({})
-const nodesGroupBy = ref('none')
+const nodesGroupBy = useLocalStorage('NodesGroupBy', [])
 
-function dataGrouping(data, groupBy) {
-  if (!data) {
-    return null;
+// Watch for changes in nodesGroupBy
+watch(nodesGroupBy, async (value) => {
+  groupingNodesData()
+  console.log(value)
+}, { deep: true })
+
+function groupingNodesData() {
+  if (nodesGroupBy.value.length === 0) {
+    groupedNodesData.value = nodesData.value
+    console.log('data', groupedNodesData.value)
+  } else {
+    groupedNodesData.value = nestGroupsBy(nodesData.value, nodesGroupBy.value)
+    console.log('data', groupedNodesData.value)
   }
+}
 
-  if (groupBy === 'none') {
-    return data;
+function removeGroup(element) {
+  const index = nodesGroupBy.value.indexOf(element);
+  if (index > -1) {
+    nodesGroupBy.value.splice(index, 1);
   }
+}
 
-  return data.reduce((acc, item) => {
-    let key = item[groupBy];
+async function initTelemetryData() {
+  if (selectedDeviceType.value === 'All') {
+    await telemetryStore.getTelemetryData(selectedTenant.value)
+  } else {
+    await telemetryStore.getTelemetryData(selectedTenant.value, { type: selectedDeviceType.value })
+  }
+  groupingNodesData()
+}
+
+/// experimental
+function nestGroupsBy(arr, properties) {
+  properties = Array.from(properties);
+  if (properties.length === 1) {
+    return groupBy(arr, properties[0]);
+  }
+  const property = properties.shift();
+  var grouped = groupBy(arr, property);
+  for (let key in grouped) {
+    grouped[key] = nestGroupsBy(grouped[key], Array.from(properties));
+  }
+  return grouped;
+}
+
+/**
+ * Group objects by property.
+ * `nestGroupsBy` helper method.
+ *
+ * @param {String} property
+ * @param {Object[]} conversions
+ * @returns {Object}
+ */
+function groupBy(conversions, property) {
+  return conversions.reduce((acc, obj) => {
+    let key = obj[property];
     if (!acc[key]) {
       acc[key] = [];
     }
-    acc[key].push(item);
+    acc[key].push(obj);
     return acc;
   }, {});
 }
 
+
+//------------
+
+///utils
+const { isDark } = storeToRefs(useThemeStore())
+const delay = (time) => new Promise((resolve) => setTimeout(resolve, time))
+const whileState = ref(true)
+const searchValue = ref('')
 
 const filteredTelemetryData = computed(() => {
   if (!searchValue.value.trim()) {
@@ -65,8 +146,6 @@ const filterArraysInObjects = (input) => {
   for (const [key, value] of Object.entries(input)) {
     if (Array.isArray(value)) {
       filteredData[key] = value.filter(item => {
-        // Your filter condition goes here
-        // For example, filter objects where data1 is greater than "5"
         return item.alias.toLowerCase().includes(searchValue.value.trim().toLowerCase())
       })
     }
@@ -74,26 +153,20 @@ const filterArraysInObjects = (input) => {
   return filteredData
 }
 
+
 onMounted(async () => {
   renderBarChart()
-  await telemetryStore.getTelemetryData(selectedTenant.value)
+  await initTenantsList()
+  await initTypesList()
+  await initTelemetryData()
+
   //table data
-  tmpNodesFirmwareVersionTableData.value = nodesData.value.reduce((acc, item) => {
-    const { fwVersion } = item;
-    if (!acc[fwVersion]) {
-      acc[fwVersion] = [];
-    }
-    acc[fwVersion].push(item);
-    return acc;
-  }, {});
+  tmpNodesFirmwareVersionTableData.value = groupBy(nodesData.value, 'fwVersion')
   selectedFw.value = tmpNodesFirmwareVersionTableData.value[0]
 
+  //init periodical request
   while (whileState.value) {
-    await telemetryStore.getTelemetryData(selectedTenant.value)
-
-    groupedNodesData.value = dataGrouping(nodesData.value, nodesGroupBy.value);
-    console.log('Grouped Nodes Data', groupedNodesData.value);
-
+    await initTelemetryData()
     //chart data
     const tmpfirmwareVersionBarChartData = nodesData.value.reduce((acc, item) => {
       const { fwVersion } = item;
@@ -110,42 +183,8 @@ onMounted(async () => {
     availableFwVersion.value = Object.keys(tmpNodesFirmwareVersionTableData.value)
     selectedFw.value = availableFwVersion.value[0]
     nodesFirmwareVersionTableData.value = tmpNodesFirmwareVersionTableData.value[selectedFw.value]
-
     updateData(firmwareVersionBarChart.value, tmpfirmwareVersionBarChartData.fwVersion, tmpfirmwareVersionBarChartData.count)
-    // let data = [{
-    //   "_time": "2024-07-03T10:44:07Z",
-    //   "Floor": "2",
-    //   "Tray": "3",
-    //   "_measurement": "nodehealth",
-    //   "device": "MMA24DCC3E1A738",
-    //   "fwVersion": "2.0.0",
-    //   "humidity": 38.54999923706055,
-    //   "hwVersion": "2.0.0",
-    //   "messageId": 0,
-    //   "rdVersion": "2.1.0",
-    //   "rssi": 78,
-    //   "temperature": 31.940000534057617,
-    //   "uptime": 208666,
-    //   "status": "ONLINE",
-    //   "alias": "R209"
-    // },
-    // {
-    //   "_time": "2024-07-03T10:44:09Z",
-    //   "Floor": "2",
-    //   "Tray": "3",
-    //   "_measurement": "nodehealth",
-    //   "device": "MMA24DCC3E2DCCC",
-    //   "fwVersion": "2.1.0",
-    //   "humidity": 38.2400016784668,
-    //   "hwVersion": "2.0.0",
-    //   "messageId": 0,
-    //   "rdVersion": "2.1.0",
-    //   "rssi": 224,
-    //   "temperature": 32.099998474121094,
-    //   "uptime": 187077,
-    //   "status": "ONLINE",
-    //   "alias": "R231"
-    // }]
+
     //table data
     tmpNodesFirmwareVersionTableData.value = nodesData.value.reduce((acc, item) => {
       const { fwVersion } = item;
@@ -237,7 +276,6 @@ const selectedFw = ref()
 
 function selectedFwChanged() {
   nodesFirmwareVersionTableData.value = tmpNodesFirmwareVersionTableData.value[selectedFw.value]
-  console.log(nodesFirmwareVersionTableData.value)
 }
 
 </script>
@@ -250,13 +288,26 @@ function selectedFwChanged() {
         <p class="text-label-primary">Dashboard</p>
       </TopBar>
       <div class="px-[20px] pt-[20px] pb-[40px] flex flex-col gap-[20px] bg-bkg-primary">
-        <div class=" flex justify-between items-center">
-          <div class="custom-select">
-            <select name="tenants" id="tenants" v-model="selectedTenant">
-              <option value="UBS">UBS</option>
-            </select>
+        <div class="grid grid-cols-2 items-top">
+          <div class="flex gap-4">
+            <div class="custom-select">
+              <h1 class="text-sm text-label-secondary">Tenant</h1>
+              <select name="tenants" id="tenants" v-model="selectedTenant" @change="initTelemetryData()">
+                <option value="none">none</option>
+                <option v-for="tenant in tenants" :value="tenant.name">{{ tenant.name }}</option>
+              </select>
+            </div>
+            <div class="custom-select">
+              <h1 class="text-sm text-label-secondary">Device Type</h1>
+              <select name="type" id="type" v-model="selectedDeviceType" @change="initTypesList()">
+                <option value="All">All</option>
+                <option v-for="data in types" :value="data.name">{{ data.name }}</option>
+              </select>
+            </div>
           </div>
-          <p class="text-sm text-label-secondary">Last Updated: {{ lastUpdated }}</p>
+          <div class="flex justify-end">
+            <p class="text-sm text-label-secondary">Last Updated: {{ lastUpdated }}</p>
+          </div>
         </div>
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div class="bg-bkg-secondary rounded-[24px] p-[2px] grid grid-rows-2">
@@ -350,7 +401,7 @@ function selectedFwChanged() {
               </div>
             </div>
           </div>
-          <div v-if="isThereOfflineDevice"
+          <div v-if="isThereOfflineDevice && !isNoDevices"
             class="flex-1 p-[20px] bg-bkg-primary rounded-[6px] sm:rounded-[24px] shadow border border-bkg-secondary flex flex-col justify-start">
             <div class="flex flex-col gap-2">
               <div class="flex justify-between items-center">
@@ -367,16 +418,23 @@ function selectedFwChanged() {
               </div>
             </div>
           </div>
-          <div v-if="!isThereOfflineDevice"
+          <div v-if="!isThereOfflineDevice && !isNoDevices"
             class="flex-1 p-[20px] bg-bkg-primary rounded-[6px] sm:rounded-[24px] shadow border border-bkg-secondary flex flex-col justify-center">
             <div class="flex flex-col gap-2 h-full">
-              <div class="flex justify-between items-center">
-                <p class="text-lg text-label-primary font-semibold">Offline devices</p>
-              </div>
               <div
                 class="border-2 rounded-xl border-dashed border-[#36AE7C] flex justify-center items-center w-full h-full flex-col gap-2">
                 <img src="../../assets/smile-icon.svg" alt="" height="120px" width="120px">
                 <p class="text-lg text-label-primary font-semibold ">Relax, all your devices are online!</p>
+              </div>
+            </div>
+          </div>
+          <div v-if="isNoDevices"
+            class="flex-1 p-[20px] bg-bkg-primary rounded-[6px] sm:rounded-[24px] shadow border border-bkg-secondary flex flex-col justify-center">
+            <div class="flex flex-col gap-2 h-full">
+              <div
+                class="border-2 rounded-xl border-dashed border-[#D9683C] flex justify-center items-center w-full h-full flex-col gap-2">
+                <img src="../../assets/oops-icon.svg" alt="" height="120px" width="120px">
+                <p class="text-lg text-label-primary font-semibold ">Ooops, seems like you don't have any device yet</p>
               </div>
             </div>
           </div>
@@ -458,18 +516,49 @@ function selectedFwChanged() {
                   <p>
                     Nodes
                   </p>
-                  <div class="flex items-center gap-4">
-                    <h1 class="text-label-primary font-semibold">Group By</h1>
-                    <div class="custom-select">
+                  <div class="flex items-center gap-3" v-if="selectedDeviceType !== 'All'">
+                    <h1 class="text-label-primary text-sm font-medium">Group By</h1>
+                    <div class="flex gap-1">
+                      <div @click="removeGroup(group)"
+                        class="bg-[#E2EBF6] border text-[#3962EB] px-2 py-1 rounded-full cursor-pointer text-xs font-sembold"
+                        v-for="group in nodesGroupBy">
+                        {{ group }}
+                      </div>
+                    </div>
+                    <div class="dropdown">
+                      <div class="p-2 rounded-lg cursor-pointer bg-bkg-tertiary">
+                        <img src="../../assets/group-icon.svg" alt="" height="16px" width="16px">
+                      </div>
+                      <div class="dropdown-content">
+                        <div v-for="(option, index) in type.groups" :key="index" class="">
+                          <label class="cursor-pointer select-none">
+                            <input class="cursor-pointer sr-only peer" type="checkbox" id="" :value="option"
+                              v-model="nodesGroupBy"
+                              :disabled="nodesGroupBy.length >= 2 && !nodesGroupBy.includes(option)">
+                            <div
+                              class="font-normal peer-checked:text-[#3962EB] text-sm rounded-lg w-full h-6 bg-gray-200 peer peer-checked:bg-[#E2EBF6]">
+                              <p class="h-full flex items-center justify-center ">{{ option }}</p>
+                            </div>
+
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                  <!-- <div class="grid grid-cols-3 items-center gap-4" v-if="selectedDeviceType !== 'All'">
+                    <h1 class="text-label-primary font-medium">Group By</h1>
+                    <div class="custom-select-2 col-span-2">
                       <select name="nodesGroupBy" id="nodesGroupBy" v-model="nodesGroupBy">
                         <option value="none">none</option>
-                        <option value="none">none</option>
+                        <option v-for="(option, index) in type.groups" :key="index" :value="option">{{ option }}
+                        </option>
                       </select>
                     </div>
-                  </div>
+                  </div> -->
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div v-if="nodesGroupBy.length === 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   <div
                     class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2"
                     v-for="data in nodesData">
@@ -524,6 +613,153 @@ function selectedFwChanged() {
                     </div>
                   </div>
                 </div>
+
+                <div v-if="nodesGroupBy.length == 1" v-for="( value, key ) in groupedNodesData"
+                  class="flex flex-col gap-4">
+                  <div class="px-6 py-2 bg-bkg-secondary rounded-[8px]">
+                    <h1 class="text-label-primary font-semibold">
+                      {{ nodesGroupBy[0] }} {{ key }}
+                    </h1>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div
+                      class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2"
+                      v-for="data in value">
+                      <div class="flex justify-between items-center">
+                        <div class="flex gap-5 items-center">
+                          <BaseIndicator :status="data.status" />
+                          <h1 class="font-medium text-base sm:text-lg text-label-primary">
+                            {{ data.alias }}
+                          </h1>
+                        </div>
+                        <div>
+                          <SignalIndicator :status=data.rssi />
+                        </div>
+                      </div>
+                      <div class="grid grid-cols-1 xl:grid-cols-2 justify-between">
+                        <div class="flex flex-col gap-1">
+                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                            <p class="font-medium text-label-primary opacity-80">SN:</p>
+                            <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
+                          </div>
+                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                            <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
+                            <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                          </div>
+                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                            <p class="text-label-primary font-medium opacity-80">Humidity:</p>
+                            <p class="text-label-primary font-semibold opacity-90">{{ data.humidity }}%</p>
+                          </div>
+                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                            <p class="text-label-primary font-medium opacity-80">Temperature:</p>
+                            <p class="text-label-primary font-semibold opacity-90">{{ data.temperature }}°C</p>
+                          </div>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                            <p class="text-label-primary font-medium opacity-80">Fw Version:</p>
+                            <p class="text-label-primary font-semibold opacity-90">{{ data.fwVersion }}</p>
+                          </div>
+                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                            <p class="text-label-primary font-medium opacity-80">Hw Version:</p>
+                            <p class="text-label-primary font-semibold opacity-90">{{ data.hwVersion }}</p>
+                          </div>
+                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                            <p class="text-label-primary font-medium opacity-80">Lora dBm:</p>
+                            <p class="text-label-primary font-semibold opacity-90">{{ data.rssi }}</p>
+                          </div>
+                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                            <p class="text-label-primary font-medium opacity-80">Uptime:</p>
+                            <p class="text-label-primary font-semibold opacity-90">{{ data.uptime }}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="nodesGroupBy.length > 1" class="flex flex-col gap-4">
+                  <!-- Iterate over the outermost grouping -->
+
+                  <div v-for="(outerGroup, outerKey) in groupedNodesData" :key="outerKey"
+                    class="rounded-[16px] bg-bkg-secondary p-[10px] flex flex-col gap-4">
+                    <!-- Display the outermost group title -->
+                    <div class="p-[6px]">
+                      <h1 class="text-label-primary font-semibold text-normal">
+                        {{ nodesGroupBy[0] }} {{ outerKey }}
+                      </h1>
+                    </div>
+
+                    <!-- Iterate over the first level of inner grouping -->
+                    <div v-for="(innerGroup, innerKey) in outerGroup" :key="innerKey"
+                      class="bg-bkg-primary p-[10px] rounded-[11px] border border-bkg-tertiary">
+                      <!-- Display the first level inner group title -->
+                      <div class="p-[6px]">
+                        <h2 class="text-label-primary font-medium text-normal">
+                          {{ nodesGroupBy[1] }} {{ innerKey }}
+                        </h2>
+                      </div>
+                      <div class="grid grid-cols-3">
+                        <!-- Iterate over the items in each nested array -->
+                        <div v-for="data in innerGroup" :key="data.device"
+                          class="border border-bkg-tertiary border-opacity-60 rounded-[8px] px-6 py-6 flex flex-col gap-2 bg-bkg-primary shadow-sm">
+                          <div class="flex justify-between items-center">
+                            <div class="flex gap-5 items-center">
+                              <!-- Assuming BaseIndicator and SignalIndicator are components or placeholders -->
+                              <BaseIndicator :status="data.status" />
+                              <h1 class="font-medium text-base sm:text-lg text-label-primary">
+                                {{ data.alias }}
+                              </h1>
+                            </div>
+                            <div>
+                              <!-- Assuming SignalIndicator is a component for signal strength -->
+                              <SignalIndicator :status="data.rssi" />
+                            </div>
+                          </div>
+                          <div class="grid grid-cols-1 xl:grid-cols-2 justify-between">
+                            <div class="flex flex-col gap-1">
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="font-medium text-label-primary opacity-80">SN:</p>
+                                <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Humidity:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.humidity }}%</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Temperature:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.temperature }}°C</p>
+                              </div>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Fw Version:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.fwVersion }}</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Hw Version:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.hwVersion }}</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Lora dBm:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.rssi }}</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Uptime:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.uptime }}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
               </div>
             </div>
           </div>
@@ -539,7 +775,7 @@ function selectedFwChanged() {
               <canvas ref="firmwareVersionBarChartCanvas"></canvas>
             </div>
             <div class="flex flex-col gap-2">
-              <div class="custom-select">
+              <div class="custom-select-2">
                 <select name="availableFw" id="availableFw" v-model="selectedFw" @change="selectedFwChanged()">
                   <option v-for="fw in availableFwVersion" :value="fw">{{ fw }}</option>
                 </select>
@@ -561,7 +797,7 @@ p {
 }
 
 .custom-select {
-  @apply relative inline-block w-[200px]
+  @apply relative inline-block w-full bg-bkg-secondary border border-label-tertiary rounded-2xl py-[6px] px-4 flex-1
 }
 
 .custom-select select {
@@ -569,7 +805,33 @@ p {
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
+  background: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><path fill="%23999" d="M10 12l-5-5h10l-5 5z"/></svg>') no-repeat right 1px center;
+  @apply w-full cursor-pointer focus:outline-none text-label-primary
+}
+
+.custom-select-2 {
+  @apply w-full
+}
+
+.custom-select-2 select {
+  font-size: 16px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   background: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><path fill="%23999" d="M10 12l-5-5h10l-5 5z"/></svg>') no-repeat right 10px center;
-  @apply w-full px-4 py-2 bg-bkg-primary border border-label-secondary rounded-full cursor-pointer focus:outline-none text-label-primary
+  @apply w-full cursor-pointer focus:outline-none text-label-primary bg-bkg-secondary border border-label-tertiary rounded-md py-[6px] px-4 font-medium
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  @apply opacity-0 absolute right-0 bg-bkg-secondary rounded-lg z-10 border min-w-[160px] shadow-lg transition-opacity ease-in-out delay-100 duration-300 p-4 flex flex-col gap-1
+}
+
+.dropdown:hover>.dropdown-content {
+  @apply opacity-100
 }
 </style>

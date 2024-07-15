@@ -27,7 +27,6 @@ export const useTypesStore = defineStore('types', {
         this.types.map((item, index) => {
           item.no = index + 1
         })
-        console.log('types data', this.types)
         this.status.code = res.data.status
       } catch (err) {
         console.error(err)
@@ -41,10 +40,8 @@ export const useTypesStore = defineStore('types', {
       this.isLoading = true
       try {
         const res = await typesAPI.getType(id)
-        console.log(res)
         this.isLoading = false
         this.type = res.data.type
-        console.log('type data', this.type)
         this.status.code = res.data.status
       } catch (err) {
         console.error(err)

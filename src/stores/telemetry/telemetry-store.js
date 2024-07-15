@@ -33,6 +33,7 @@ function formatUptime(uptimeInSeconds) {
 
 export const useTelemetryStore = defineStore('Telemetry', {
   state: () => ({
+    isNoDevices: ref(false),
     lastUpdated: ref(),
     isThereOfflineDevice: ref(false),
     offlineDevices: ref(),
@@ -56,10 +57,10 @@ export const useTelemetryStore = defineStore('Telemetry', {
     getTelemetryDataLoading: ref(false)
   }),
   actions: {
-    async getTelemetryData(tenant) {
+    async getTelemetryData(tenant, type) {
       this.getTelemetryDataLoading = true
       try {
-        const res = await telemetryAPI.getTelemetryData(tenant)
+        const res = await telemetryAPI.getTelemetryData(tenant, type)
         let gateways = res.data.statusDevices.gateways
         let onlineGatewaysList = gateways.filter((data) => data.status === 'ONLINE')
         let offlineGatewaysList = gateways.filter((data) => data.status === 'OFFLINE')
@@ -100,10 +101,10 @@ export const useTelemetryStore = defineStore('Telemetry', {
           data.rssi = Math.floor(rssiToDbm(data.rssi))
         })
 
-        this.telemetryData =
-        {
-          gateways: this.gatewaysData,
-          nodes: this.nodesData
+        if (this.totalGateways === 0 && this.totalDevices === 0) {
+          this.isNoDevices = true
+        } else {
+          this.isNoDevices = false
         }
 
       } catch (err) {

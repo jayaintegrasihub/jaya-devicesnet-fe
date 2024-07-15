@@ -89,14 +89,18 @@ async function initTelemetryData() {
 function initTableChartData() {
 
   //table data
-  nodesFirmwareVersionTableData.value = []
+  tmpGatewaysFirmwareVersionTableData.value = groupBy(gatewaysData.value, 'fwVersion')
+  availableGatewaysFwVersion.value = Object.keys(tmpGatewaysFirmwareVersionTableData.value)
+  selectedGatewaysFw.value = availableGatewaysFwVersion.value[0]
+  gatewaysFirmwareVersionTableData.value = tmpGatewaysFirmwareVersionTableData.value[selectedGatewaysFw.value] === undefined ? [] : tmpGatewaysFirmwareVersionTableData.value[selectedGatewaysFw.value]
+
   tmpNodesFirmwareVersionTableData.value = groupBy(nodesData.value, 'fwVersion')
-  availableFwVersion.value = Object.keys(tmpNodesFirmwareVersionTableData.value)
-  selectedFw.value = availableFwVersion.value[0]
-  nodesFirmwareVersionTableData.value = tmpNodesFirmwareVersionTableData.value[selectedFw.value] === undefined ? [] : tmpNodesFirmwareVersionTableData.value[selectedFw.value]
+  availableNodesFwVersion.value = Object.keys(tmpNodesFirmwareVersionTableData.value)
+  selectedNodesFw.value = availableNodesFwVersion.value[0]
+  nodesFirmwareVersionTableData.value = tmpNodesFirmwareVersionTableData.value[selectedNodesFw.value] === undefined ? [] : tmpNodesFirmwareVersionTableData.value[selectedNodesFw.value]
 
   //chart data
-  const tmpfirmwareVersionBarChartData = nodesData.value.reduce((acc, item) => {
+  const tmpGatewaysFirmwareVersionBarChartData = gatewaysData.value.reduce((acc, item) => {
     const { fwVersion } = item;
     const index = acc.fwVersion.indexOf(fwVersion);
     if (index === -1) {
@@ -108,7 +112,21 @@ function initTableChartData() {
     return acc;
   }, { fwVersion: [], count: [] });
 
-  updateData(firmwareVersionBarChart.value, tmpfirmwareVersionBarChartData.fwVersion, tmpfirmwareVersionBarChartData.count)
+  updateData(gatewaysFirmwareVersionBarChart.value, tmpGatewaysFirmwareVersionBarChartData.fwVersion, tmpGatewaysFirmwareVersionBarChartData.count)
+
+  const tmpNodesFirmwareVersionBarChartData = nodesData.value.reduce((acc, item) => {
+    const { fwVersion } = item;
+    const index = acc.fwVersion.indexOf(fwVersion);
+    if (index === -1) {
+      acc.fwVersion.push(fwVersion);
+      acc.count.push(1);
+    } else {
+      acc.count[index]++;
+    }
+    return acc;
+  }, { fwVersion: [], count: [] });
+
+  updateData(nodesFirmwareVersionBarChart.value, tmpNodesFirmwareVersionBarChartData.fwVersion, tmpNodesFirmwareVersionBarChartData.count)
 }
 
 /// experimental
@@ -165,7 +183,6 @@ const filteredTelemetryData = computed(() => {
 })
 
 onMounted(async () => {
-  nodesFirmwareVersionTableData.value = []
   renderBarChart()
   await initTenantsList()
   await initTypesList()
@@ -175,17 +192,6 @@ onMounted(async () => {
   while (whileState.value) {
     await initTelemetryData()
     await delay(5000)
-
-    // //table data
-    // tmpNodesFirmwareVersionTableData.value = nodesData.value.reduce((acc, item) => {
-    //   const { fwVersion } = item;
-    //   if (!acc[fwVersion]) {
-    //     acc[fwVersion] = [];
-    //   }
-    //   acc[fwVersion].push(item);
-    //   return acc;
-    // }, {});
-
   }
 })
 
@@ -194,11 +200,14 @@ onUnmounted(() => {
 })
 
 //chart
-const firmwareVersionBarChartCanvas = ref(null)
-let firmwareVersionBarChart
+const nodesFirmwareVersionBarChartCanvas = ref(null)
+let nodesFirmwareVersionBarChart
+
+const gatewaysFirmwareVersionBarChartCanvas = ref(null)
+let gatewaysFirmwareVersionBarChart
 
 function renderBarChart() {
-  let firmwareVersionChartData = {
+  let gatewaysFirmwareVersionChartData = {
     labels: [],
     datasets: [
       {
@@ -211,10 +220,45 @@ function renderBarChart() {
     ],
   }
 
-  const firmwareVersionChartCtx = firmwareVersionBarChartCanvas.value.getContext('2d')
-  firmwareVersionBarChart = shallowRef(new Chart(firmwareVersionChartCtx, {
+  const gatewaysFirmwareVersionChartCtx = gatewaysFirmwareVersionBarChartCanvas.value.getContext('2d')
+  gatewaysFirmwareVersionBarChart = shallowRef(new Chart(gatewaysFirmwareVersionChartCtx, {
     type: 'bar',
-    data: firmwareVersionChartData,
+    data: gatewaysFirmwareVersionChartData,
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          ticks: {
+            callback: function (value) {
+              if (Number.isInteger(value)) {
+                return value;
+              }
+              return '';
+            }
+          },
+          beginAtZero: true
+        }
+      }
+    }
+  }))
+
+  let nodesFirmwareVersionChartData = {
+    labels: [],
+    datasets: [
+      {
+        type: 'bar',
+        label: 'Quantity',
+        data: [],
+        backgroundColor: 'rgba(54, 174, 124, 0.8)',
+        borderRadius: 4,
+      },
+    ],
+  }
+
+  const nodesFirmwareVersionChartCtx = nodesFirmwareVersionBarChartCanvas.value.getContext('2d')
+  nodesFirmwareVersionBarChart = shallowRef(new Chart(nodesFirmwareVersionChartCtx, {
+    type: 'bar',
+    data: nodesFirmwareVersionChartData,
     options: {
       responsive: true,
       scales: {
@@ -233,6 +277,7 @@ function renderBarChart() {
     }
   }))
 }
+
 
 function updateData(chart, label, newData) {
   chart.data.labels = []
@@ -256,14 +301,24 @@ const header = [
   { text: "Firmware Ver.", value: "fwVersion", sortable: true },
 ]
 
+const tmpGatewaysFirmwareVersionTableData = ref('')
+const gatewaysFirmwareVersionTableData = ref([])
+const availableGatewaysFwVersion = ref([])
+const selectedGatewaysFw = ref()
+
+function selectedGatewaysFwChanged() {
+  gatewaysFirmwareVersionTableData.value = tmpGatewaysFirmwareVersionTableData.value[selectedGatewaysFw.value]
+}
+
 const tmpNodesFirmwareVersionTableData = ref('')
 const nodesFirmwareVersionTableData = ref([])
-const availableFwVersion = ref([])
-const selectedFw = ref()
+const availableNodesFwVersion = ref([])
+const selectedNodesFw = ref()
 
-function selectedFwChanged() {
-  nodesFirmwareVersionTableData.value = tmpNodesFirmwareVersionTableData.value[selectedFw.value]
+function selectedNodesFwChanged() {
+  nodesFirmwareVersionTableData.value = tmpNodesFirmwareVersionTableData.value[selectedNodesFw.value]
 }
+
 
 </script>
 
@@ -757,19 +812,46 @@ function selectedFwChanged() {
           <h1 class="text-label-primary text-lg font-semibold">
             Firmware Versions
           </h1>
-          <div class="grid grid-cols-3 gap-6">
-            <div class="col-span-2">
-              <canvas ref="firmwareVersionBarChartCanvas"></canvas>
-            </div>
-            <div class="flex flex-col gap-2">
-              <div class="custom-select-2">
-                <select name="availableFw" id="availableFw" v-model="selectedFw" @change="selectedFwChanged()">
-                  <option v-for="fw in availableFwVersion" :value="fw">{{ fw }}</option>
-                </select>
+          <div>
+            <h1 class="text-label-primary text-lg font-medium">
+              Gateways
+            </h1>
+            <div class="grid grid-cols-3 gap-6">
+              <div class="col-span-2">
+                <canvas ref="gatewaysFirmwareVersionBarChartCanvas"></canvas>
               </div>
-              <EasyDataTable class="col-span-1" :rows-per-page="10" table-class-name="customize-table" :headers="header"
-                :items="nodesFirmwareVersionTableData" theme-color="#1363df">
-              </EasyDataTable>
+              <div class="flex flex-col gap-2">
+                <div class="custom-select-2">
+                  <select name="availableGatewaysFw" id="availableGatewaysFw" v-model="selectedGatewaysFw"
+                    @change="selectedGatewaysFwChanged()">
+                    <option v-for="fw in availableGatewaysFwVersion" :value="fw">{{ fw }}</option>
+                  </select>
+                </div>
+                <EasyDataTable class="col-span-1" :rows-per-page="10" :rows-items="[10]" table-class-name="customize-table"
+                  :headers="header" :items="gatewaysFirmwareVersionTableData" theme-color="#1363df">
+                </EasyDataTable>
+              </div>
+            </div>
+          </div>
+          <div>
+            <h1 class="text-label-primary text-lg font-medium">
+              Nodes
+            </h1>
+            <div class="grid grid-cols-3 gap-6">
+              <div class="col-span-2">
+                <canvas ref="nodesFirmwareVersionBarChartCanvas"></canvas>
+              </div>
+              <div class="flex flex-col gap-2">
+                <div class="custom-select-2">
+                  <select name="availableNodesFw" id="availableNodesFw" v-model="selectedNodesFw"
+                    @change="selectedNodesFwChanged()">
+                    <option v-for="fw in availableNodesFwVersion" :value="fw">{{ fw }}</option>
+                  </select>
+                </div>
+                <EasyDataTable class="col-span-1" :rows-per-page="10" :rows-items="[10]" table-class-name="customize-table"
+                  :headers="header" :items="nodesFirmwareVersionTableData" theme-color="#1363df">
+                </EasyDataTable>
+              </div>
             </div>
           </div>
         </div>
@@ -779,6 +861,7 @@ function selectedFwChanged() {
 </template>
 
 <style scoped>
+
 p {
   @apply select-none
 }

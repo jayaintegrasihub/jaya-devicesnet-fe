@@ -37,7 +37,7 @@ const { type, types } = storeToRefs(useTypesStore())
 const selectedDeviceType = useLocalStorage('SelectedDeviceType', 'All')
 
 async function initTypesList() {
-  initTelemetryData()
+  await initTelemetryData()
   await typeStore.getTypes()
   if (selectedDeviceType.value !== 'All') {
     let selectedType = findByName(types.value, selectedDeviceType.value)
@@ -58,16 +58,13 @@ const nodesGroupBy = useLocalStorage('NodesGroupBy', [])
 // Watch for changes in nodesGroupBy
 watch(nodesGroupBy, async (value) => {
   groupingNodesData()
-  console.log(value)
 }, { deep: true })
 
 function groupingNodesData() {
   if (nodesGroupBy.value.length === 0) {
     groupedNodesData.value = nodesData.value
-    console.log('data', groupedNodesData.value)
   } else {
     groupedNodesData.value = nestGroupsBy(nodesData.value, nodesGroupBy.value)
-    console.log('data', groupedNodesData.value)
   }
 }
 
@@ -79,12 +76,39 @@ function removeGroup(element) {
 }
 
 async function initTelemetryData() {
+
   if (selectedDeviceType.value === 'All') {
     await telemetryStore.getTelemetryData(selectedTenant.value)
   } else {
     await telemetryStore.getTelemetryData(selectedTenant.value, { type: selectedDeviceType.value })
   }
   groupingNodesData()
+  initTableChartData()
+}
+
+function initTableChartData() {
+
+  //table data
+  nodesFirmwareVersionTableData.value = []
+  tmpNodesFirmwareVersionTableData.value = groupBy(nodesData.value, 'fwVersion')
+  availableFwVersion.value = Object.keys(tmpNodesFirmwareVersionTableData.value)
+  selectedFw.value = availableFwVersion.value[0]
+  nodesFirmwareVersionTableData.value = tmpNodesFirmwareVersionTableData.value[selectedFw.value] === undefined ? [] : tmpNodesFirmwareVersionTableData.value[selectedFw.value]
+
+  //chart data
+  const tmpfirmwareVersionBarChartData = nodesData.value.reduce((acc, item) => {
+    const { fwVersion } = item;
+    const index = acc.fwVersion.indexOf(fwVersion);
+    if (index === -1) {
+      acc.fwVersion.push(fwVersion);
+      acc.count.push(1);
+    } else {
+      acc.count[index]++;
+    }
+    return acc;
+  }, { fwVersion: [], count: [] });
+
+  updateData(firmwareVersionBarChart.value, tmpfirmwareVersionBarChartData.fwVersion, tmpfirmwareVersionBarChartData.count)
 }
 
 /// experimental
@@ -140,65 +164,28 @@ const filteredTelemetryData = computed(() => {
   })
 })
 
-// Function to filter each object's array
-const filterArraysInObjects = (input) => {
-  const filteredData = {}
-  for (const [key, value] of Object.entries(input)) {
-    if (Array.isArray(value)) {
-      filteredData[key] = value.filter(item => {
-        return item.alias.toLowerCase().includes(searchValue.value.trim().toLowerCase())
-      })
-    }
-  }
-  return filteredData
-}
-
-
 onMounted(async () => {
+  nodesFirmwareVersionTableData.value = []
   renderBarChart()
   await initTenantsList()
   await initTypesList()
   await initTelemetryData()
 
-  //table data
-  tmpNodesFirmwareVersionTableData.value = groupBy(nodesData.value, 'fwVersion')
-  selectedFw.value = tmpNodesFirmwareVersionTableData.value[0]
-
   //init periodical request
   while (whileState.value) {
     await initTelemetryData()
-    //chart data
-    const tmpfirmwareVersionBarChartData = nodesData.value.reduce((acc, item) => {
-      const { fwVersion } = item;
-      const index = acc.fwVersion.indexOf(fwVersion);
-      if (index === -1) {
-        acc.fwVersion.push(fwVersion);
-        acc.count.push(1);
-      } else {
-        acc.count[index]++;
-      }
-      return acc;
-    }, { fwVersion: [], count: [] });
-
-    availableFwVersion.value = Object.keys(tmpNodesFirmwareVersionTableData.value)
-    selectedFw.value = availableFwVersion.value[0]
-    nodesFirmwareVersionTableData.value = tmpNodesFirmwareVersionTableData.value[selectedFw.value]
-    updateData(firmwareVersionBarChart.value, tmpfirmwareVersionBarChartData.fwVersion, tmpfirmwareVersionBarChartData.count)
-
-    //table data
-    tmpNodesFirmwareVersionTableData.value = nodesData.value.reduce((acc, item) => {
-      const { fwVersion } = item;
-      if (!acc[fwVersion]) {
-        acc[fwVersion] = [];
-      }
-      acc[fwVersion].push(item);
-      return acc;
-    }, {});
-
-    availableFwVersion.value = Object.keys(tmpNodesFirmwareVersionTableData.value)
-
-    const filteredData = filterArraysInObjects(telemetryData)
     await delay(5000)
+
+    // //table data
+    // tmpNodesFirmwareVersionTableData.value = nodesData.value.reduce((acc, item) => {
+    //   const { fwVersion } = item;
+    //   if (!acc[fwVersion]) {
+    //     acc[fwVersion] = [];
+    //   }
+    //   acc[fwVersion].push(item);
+    //   return acc;
+    // }, {});
+
   }
 })
 
@@ -270,7 +257,7 @@ const header = [
 ]
 
 const tmpNodesFirmwareVersionTableData = ref('')
-const nodesFirmwareVersionTableData = ref('')
+const nodesFirmwareVersionTableData = ref([])
 const availableFwVersion = ref([])
 const selectedFw = ref()
 
@@ -759,7 +746,7 @@ function selectedFwChanged() {
                     </div>
                   </div>
                 </div>
-                
+
               </div>
             </div>
           </div>

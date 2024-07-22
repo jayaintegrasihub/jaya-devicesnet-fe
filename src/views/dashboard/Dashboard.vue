@@ -450,13 +450,15 @@ function selectedNodesFwChanged() {
                 <p class="text-lg text-label-primary font-semibold">Offline devices</p>
                 <p class="text-sm text-var-blue">show all offline devices ></p>
               </div>
-              <div v-for="data in offlineDevices"
-                class="bg-var-red rounded-[4px] px-[20px] py-[20px] text-white  flex flex-col gap-2 justify-start">
-                <div class="flex justify-between">
-                  <!-- <p class="text-sm">{{ data.device }}</p> -->
-                  <p class="text-xs">Last Heard: {{ data._time }}</p>
+              <div class="flex flex-col gap-2 h-[280px] overflow-y-auto">
+                <div v-for="data in offlineDevices"
+                  class="bg-var-red rounded-[4px] px-[20px] py-[20px] text-white  flex flex-col gap-2 justify-start over">
+                  <div class="flex justify-between">
+                    <!-- <p class="text-sm">{{ data.device }}</p> -->
+                    <p class="text-xs">Last Heard: {{ data._time }}</p>
+                  </div>
+                  <label class="text-sm font-semibold">{{ data.alias }} - {{ data.device }}</label>
                 </div>
-                <label class="text-sm font-semibold">{{ data.alias }} - {{ data.device }}</label>
               </div>
             </div>
           </div>
@@ -813,9 +815,11 @@ function selectedNodesFwChanged() {
             Firmware Versions
           </h1>
           <div>
-            <h1 class="text-label-primary text-lg font-medium">
-              Gateways
-            </h1>
+            <div class="py-2 px-4 rounded-md bg-bkg-tertiary w-fit">
+              <h1 class="text-label-primary text-md font-medium">
+                Gateways
+              </h1>
+            </div>
             <div class="grid grid-cols-3 gap-6">
               <div class="col-span-2">
                 <canvas ref="gatewaysFirmwareVersionBarChartCanvas"></canvas>
@@ -827,16 +831,19 @@ function selectedNodesFwChanged() {
                     <option v-for="fw in availableGatewaysFwVersion" :value="fw">{{ fw }}</option>
                   </select>
                 </div>
-                <EasyDataTable class="col-span-1" :rows-per-page="10" :rows-items="[10]" table-class-name="customize-table"
-                  :headers="header" :items="gatewaysFirmwareVersionTableData" theme-color="#1363df">
+                <EasyDataTable class="col-span-1" :rows-per-page="10" :rows-items="[10]"
+                  table-class-name="customize-table" :headers="header" :items="gatewaysFirmwareVersionTableData"
+                  theme-color="#1363df">
                 </EasyDataTable>
               </div>
             </div>
           </div>
           <div>
-            <h1 class="text-label-primary text-lg font-medium">
-              Nodes
-            </h1>
+            <div class="py-2 px-4 rounded-md bg-bkg-tertiary w-fit">
+              <h1 class="text-label-primary text-md font-medium">
+                Nodes
+              </h1>
+            </div>
             <div class="grid grid-cols-3 gap-6">
               <div class="col-span-2">
                 <canvas ref="nodesFirmwareVersionBarChartCanvas"></canvas>
@@ -848,8 +855,9 @@ function selectedNodesFwChanged() {
                     <option v-for="fw in availableNodesFwVersion" :value="fw">{{ fw }}</option>
                   </select>
                 </div>
-                <EasyDataTable class="col-span-1" :rows-per-page="10" :rows-items="[10]" table-class-name="customize-table"
-                  :headers="header" :items="nodesFirmwareVersionTableData" theme-color="#1363df">
+                <EasyDataTable class="col-span-1" :rows-per-page="10" :rows-items="[10]"
+                  table-class-name="customize-table" :headers="header" :items="nodesFirmwareVersionTableData"
+                  theme-color="#1363df">
                 </EasyDataTable>
               </div>
             </div>
@@ -861,7 +869,6 @@ function selectedNodesFwChanged() {
 </template>
 
 <style scoped>
-
 p {
   @apply select-none
 }
@@ -903,5 +910,19 @@ p {
 
 .dropdown:hover>.dropdown-content {
   @apply opacity-100
+}
+
+
+::-webkit-scrollbar {
+  width: 0.2em;
+}
+
+/* ::-webkit-scrollbar-track {
+  -webkit-box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.1);
+} */
+
+::-webkit-scrollbar-thumb {
+  background-color: #C8C8C8;
+  border-radius: 10px;
 }
 </style>

@@ -13,6 +13,7 @@ import { useTypesStore } from '@/stores/master-data/types-store'
 import { Chart, BarElement, BarController, CategoryScale, Decimation, Filler, Legend, Title, Tooltip, PointElement, LineElement, LinearScale } from 'chart.js';
 Chart.register(BarElement, BarController, CategoryScale, Decimation, Filler, Legend, Title, Tooltip, PointElement, LineElement, LinearScale)
 import { shallowRef } from 'vue'
+import router from '@/router'
 
 
 /// tenants
@@ -319,6 +320,10 @@ function selectedNodesFwChanged() {
   nodesFirmwareVersionTableData.value = tmpNodesFirmwareVersionTableData.value[selectedNodesFw.value]
 }
 
+function goToDeviceDetailPage(id) {
+  router.push({ name: 'deviceDetail', params: { id: id } })
+}
+
 
 </script>
 
@@ -334,14 +339,14 @@ function selectedNodesFwChanged() {
           <div class="flex gap-4">
             <div class="custom-select">
               <h1 class="text-sm text-label-secondary">Tenant</h1>
-              <select name="tenants" id="tenants" v-model="selectedTenant" @change="initTelemetryData()">
+              <select class="custom-select-option" name="tenants" id="tenants" v-model="selectedTenant" @change="initTelemetryData()">
                 <option value="none">none</option>
                 <option v-for="tenant in tenants" :value="tenant.name">{{ tenant.name }}</option>
               </select>
             </div>
             <div class="custom-select">
               <h1 class="text-sm text-label-secondary">Device Type</h1>
-              <select name="type" id="type" v-model="selectedDeviceType" @change="initTypesList()">
+              <select class="custom-select-option" name="type" id="type" v-model="selectedDeviceType" @change="initTypesList()">
                 <option value="All">All</option>
                 <option v-for="data in types" :value="data.name">{{ data.name }}</option>
               </select>
@@ -603,8 +608,8 @@ function selectedNodesFwChanged() {
                 </div>
 
                 <div v-if="nodesGroupBy.length === 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  <div
-                    class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2"
+                  <div @click="goToDeviceDetailPage(data.device)"
+                    class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200"
                     v-for="data in nodesData">
                     <div class="flex justify-between items-center">
                       <div class="flex gap-5 items-center">
@@ -873,8 +878,17 @@ p {
   @apply select-none
 }
 
+.custom-select-option {
+  @apply outline-none text-[10px] md:text-[12px] text-label-secondary pb-[6px] px-2 rounded-lg cursor-pointer md:min-w-[200px]
+}
+
+.custom-select-option option {
+  @apply p-2 cursor-pointer bg-bkg-secondary
+}
+
+
 .custom-select {
-  @apply relative inline-block w-full bg-bkg-secondary border border-label-tertiary rounded-2xl py-[6px] px-4 flex-1
+  @apply relative inline-block w-full bg-bkg-secondary hover:bg-bkg-tertiary border border-label-tertiary rounded-2xl pt-[6px] px-4 flex-1
 }
 
 .custom-select select {
@@ -898,6 +912,10 @@ p {
   background: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><path fill="%23999" d="M10 12l-5-5h10l-5 5z"/></svg>') no-repeat right 10px center;
   @apply w-full cursor-pointer focus:outline-none text-label-primary bg-bkg-secondary border border-label-tertiary rounded-md py-[6px] px-4 font-medium
 }
+
+/* option {
+  @apply bg-bkg-primary
+} */
 
 .dropdown {
   position: relative;

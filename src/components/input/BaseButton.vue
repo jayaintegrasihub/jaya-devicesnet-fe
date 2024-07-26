@@ -49,7 +49,7 @@ button {
 
 .primary {
 
-  @apply bg-accent-1 rounded-lg text-white p-2 cursor-pointer text-[10px] md:text-xs font-medium justify-center items-center text-center
+  @apply bg-accent-1 rounded-lg text-accent-2 p-2 cursor-pointer text-[10px] md:text-xs font-medium justify-center items-center text-center
   transition-transform duration-300 border-solid border-2 border-accent-1
 }
 

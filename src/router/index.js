@@ -29,9 +29,10 @@ const router = createRouter({
       component: () => import('../views/master-data/MasterData.vue')
     },
     {
-      path: '/device-detail',
+      path: '/device-detail/:id',
       name: 'deviceDetail',
       meta: { requiresAuth: true} ,
+      props: true,
       component: () => import('../views/DeviceDetail.vue')
     }
   ]
@@ -39,7 +40,7 @@ const router = createRouter({
 
 
 router.beforeEach(async (to, from,  next) => {
-  document.title = 'Intellisense | DevicesNet'
+  document.title = 'Telemetric | DevicesNet'
   if (to.meta.requiresAuth && !localStorage.getItem('auth.accessToken')){
     next({ name: 'login'})
   } else if (to.meta.requiresAuth && localStorage.getItem('auth.accessToken') || to.meta.freeAccess){

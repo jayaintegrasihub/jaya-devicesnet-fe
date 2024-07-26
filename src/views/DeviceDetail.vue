@@ -1,48 +1,41 @@
-<script>
+<script setup>
 import { onMounted, ref } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import IconButton from '@/components/input/IconButton.vue'
 import BaseIndicator from '@/components/indicator/BaseIndicator.vue'
-import { useThemeStore } from '@/stores/theme'
 import { storeToRefs } from 'pinia'
-export default {
-  components: {
-    IconButton, BaseIndicator
-  },
-  props: ['id'],
+import router from '@/router'
 
-  setup() {
-    const { isDark } = storeToRefs(useThemeStore())
-    const selectedComponent = useLocalStorage('SelectedDeviceTab', 'GatewayMaster')
-    onMounted(async () => {
+const props = defineProps(['id'])
 
-    })
-
-    return {
-      selectedComponent,
-      isDark
-    }
-  }
+function goBack(){
+  router.go(-1)
 }
+onMounted(async () => {
+  console.log(props.id)
+})
+
 </script>
 <template>
   <div class="flex relative">
     <SideNav :isDevicesManagementActive="true" />
     <div class="flex flex-col w-screen">
       <TopBar>
-        <div class="flex gap-2">
-          <p >Back</p>
-          <p >Device Detail
-          </p>
+        <div class="flex gap-3">
+          <p @click="goBack()"
+            class="text-label-secondary cursor-pointer hover:text-label-primary transition-colors ease-in-out duration-150">
+            &lt Back</p>
+          <p class="text-label-secondary select-none"> |</p>
+          <p class="text-label-primary select-none"> Device Detail</p>
         </div>
       </TopBar>
       <div class="general-info">
-        <img src="../assets//device-img.png" class="device-img">
+        <img src="../assets/device-img.png" class="device-img">
         <div class="flex flex-col w-full gap-4">
           <div class="flex justify-between items-start w-full">
             <div class="flex gap-5 items-center">
               <BaseIndicator :status="'ONLINE'" />
-              <h1>Device Name</h1>
+              <h1 class="text-label-primary">Device Name</h1>
             </div>
             <IconButton type="submit" class="outlined" label="Edit" @click="">
               <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12" fill="none">
@@ -58,48 +51,45 @@ export default {
           <div class="grid grid-cols-4 flex-1">
             <div class="flex flex-col col-span-1 justify-between">
               <div class="flex gap-[10px]">
-                <p class="text-label_light_secondary">ID:</p>
-                <p class="text-label_light_primary">AIRIO1283912489</p>
+                <p class="text-label-secondary">ID:</p>
+                <p class="text-text-label-primary">{{props.id}}</p>
               </div>
               <div class="flex gap-[10px]">
-                <p class="text-label_light_secondary">Type:</p>
-                <p class="text-label_light_primary">Node</p>
+                <p class="text-label-secondary">Type:</p>
+                <p class="text-text-label-primary">Node</p>
               </div>
               <div class="flex gap-[10px]">
-                <p class="text-label_light_secondary">Firmware Version:</p>
-                <p class="text-label_light_primary">2.0.0</p>
+                <p class="text-label-secondary">Firmware Version:</p>
+                <p class="text-text-label-primary">2.0.0</p>
               </div>
             </div>
             <div class="flex col-span-1">
               <div class="flex flex-col col-span-1 justify-between">
                 <div class="flex gap-[10px]">
-                  <p class="text-label_light_secondary">Hardware Version:</p>
-                  <p class="text-label_light_primary">2.0.0</p>
+                  <p class="text-label-secondary">Hardware Version:</p>
+                  <p class="text-text-label-primary">2.0.0</p>
                 </div>
                 <div class="flex gap-[10px]">
-                  <p class="text-label_light_secondary">Server Protocol Version:</p>
-                  <p class="text-label_light_primary">2.0.0</p>
+                  <p class="text-label-secondary">Server Protocol Version:</p>
+                  <p class="text-text-label-primary">2.0.0</p>
                 </div>
                 <div class="flex gap-[10px]">
-                  <p class="text-label_light_secondary">Radio Protocol Version:</p>
-                  <p class="text-label_light_primary">2.0.0</p>
+                  <p class="text-label-secondary">Radio Protocol Version:</p>
+                  <p class="text-text-label-primary">2.0.0</p>
                 </div>
               </div>
 
             </div>
             <div class="col-span-2">
-              <p class="text-label_light_secondary">Notes:</p>
-              <p class="text-label_light_primary">Click the edit button to keep notes on this device, like 'Deployed to
+              <p class="text-label-secondary">Notes:</p>
+              <p class="text-text-label-primary">Click the edit button to keep notes on this device, like 'Deployed to
                 customer site'.</p>
             </div>
           </div>
         </div>
       </div>
-      <div class="m-[20px] flex h-[3000px] py-8 bg-white rounded-[10px] shadow border border-zinc-100 flex-col gap-5">
-        <!-- <div class="mx-8 grid grid-row gap-6 md:gap-10 ">
-
-        </div>
-        <component :is="selectedComponent" /> -->
+      <div
+        class="flex-1 m-[20px] flex h-[3000px] py-8 bg-white rounded-[10px] shadow border border-zinc-100 flex-col gap-5">
       </div>
     </div>
   </div>
@@ -107,7 +97,7 @@ export default {
 
 <style scoped>
 .general-info {
-  @apply h-52 shadow-md flex sticky top-[60px] px-5 py-8 gap-10 border-b
+  @apply h-52 shadow-md flex sticky top-[60px] px-5 py-8 gap-10 border-b border-bkg-secondary bg-bkg-primary
 }
 
 .general-info h1 {

@@ -107,8 +107,8 @@ input:-webkit-autofill:active {
     --color-label-secondary: #B6B6B6;
     --color-label-tertiary: #ECEBEB;
     --color-content: 210deg 40% 38%;
-    --color-accent1: #015A6A;
-    --color-accent2: #D9683C;
+    --color-accent1: #0989C0;
+    --color-accent2: #FFFF;
     --color-red-accent: #E63946;
     --color-green-accent: #57C09B;
     --color-blue-accent: #2482E6;
@@ -123,8 +123,8 @@ input:-webkit-autofill:active {
     --color-label-secondary: #69696C;
     --color-label-tertiary: #2E2E2F;
     --color-content: 210deg 40% 98%;
-    --color-accent1: #D9683C;
-    --color-accent2: #015A6A;
+    --color-accent1: #FFFF;
+    --color-accent2: #0989C0;
     --color-red-accent: #E63946;
     --color-green-accent: #57C09B;
     --color-blue-accent: #2482E6;

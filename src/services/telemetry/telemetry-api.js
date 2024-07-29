@@ -1,7 +1,7 @@
 import apiClient from "../api";
  
 export default {
-  getTelemetryData(tenant, params) {
-    return apiClient.get(`telemetry/access-token/status-device/${tenant}`, {params})
+  getTelemetryDetail(serialNumber) {
+    return apiClient.get(`telemetry/details/${serialNumber}`)
   }
 }

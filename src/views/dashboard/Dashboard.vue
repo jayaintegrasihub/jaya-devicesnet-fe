@@ -52,7 +52,7 @@ const findByName = (array, name) => {
 
 ///telemetry
 const telemetryStore = useTelemetryStore()
-const { isNoDevices, nodesData, gatewaysData, lastUpdated, isThereOfflineDevice, offlineDevices, telemetryData, totalDevices, totalGateways, totalNodes, totalOffline, totalOnline, onlineGateways, onlineNodes, offlineGateways, offlineNodes } = storeToRefs(useTelemetryStore())
+const { eventData, isNoDevices, nodesData, gatewaysData, lastUpdated, isThereOfflineDevice, offlineDevices, telemetryData, totalDevices, totalGateways, totalNodes, totalOffline, totalOnline, onlineGateways, onlineNodes, offlineGateways, offlineNodes } = storeToRefs(useTelemetryStore())
 const groupedNodesData = ref({})
 const nodesGroupBy = useLocalStorage('NodesGroupBy', [])
 
@@ -77,18 +77,26 @@ function removeGroup(element) {
 }
 
 async function initTelemetryData() {
+  telemetryStore.stopListening()
 
   if (selectedDeviceType.value === 'All') {
-    await telemetryStore.getTelemetryData(selectedTenant.value)
+    telemetryStore.startListening(selectedTenant.value, undefined, () => {
+      groupingNodesData()
+      initTableChartData()
+    })
+    // await telemetryStore.getTelemetryData(selectedTenant.value)
   } else {
-    await telemetryStore.getTelemetryData(selectedTenant.value, { type: selectedDeviceType.value })
+    telemetryStore.startListening(selectedTenant.value, selectedDeviceType.value, () => {
+      groupingNodesData()
+      initTableChartData()
+    })
+    // await telemetryStore.getTelemetryData(selectedTenant.value, { type: selectedDeviceType.value })
   }
-  groupingNodesData()
-  initTableChartData()
+
 }
 
-function initTableChartData() {
 
+function initTableChartData() {
   //table data
   tmpGatewaysFirmwareVersionTableData.value = groupBy(gatewaysData.value, 'fwVersion')
   availableGatewaysFwVersion.value = Object.keys(tmpGatewaysFirmwareVersionTableData.value)
@@ -99,7 +107,7 @@ function initTableChartData() {
   availableNodesFwVersion.value = Object.keys(tmpNodesFirmwareVersionTableData.value)
   selectedNodesFw.value = availableNodesFwVersion.value[0]
   nodesFirmwareVersionTableData.value = tmpNodesFirmwareVersionTableData.value[selectedNodesFw.value] === undefined ? [] : tmpNodesFirmwareVersionTableData.value[selectedNodesFw.value]
-
+  console.log(nodesFirmwareVersionTableData.value)
   //chart data
   const tmpGatewaysFirmwareVersionBarChartData = gatewaysData.value.reduce((acc, item) => {
     const { fwVersion } = item;
@@ -183,21 +191,16 @@ const filteredTelemetryData = computed(() => {
   })
 })
 
+
 onMounted(async () => {
   renderBarChart()
   await initTenantsList()
   await initTypesList()
   await initTelemetryData()
-
-  //init periodical request
-  while (whileState.value) {
-    await initTelemetryData()
-    await delay(5000)
-  }
 })
 
 onUnmounted(() => {
-  whileState.value = false
+  telemetryStore.stopListening()
 })
 
 //chart
@@ -339,14 +342,16 @@ function goToDeviceDetailPage(id) {
           <div class="flex gap-4">
             <div class="custom-select">
               <h1 class="text-sm text-label-secondary">Tenant</h1>
-              <select class="custom-select-option" name="tenants" id="tenants" v-model="selectedTenant" @change="initTelemetryData()">
+              <select class="custom-select-option" name="tenants" id="tenants" v-model="selectedTenant"
+                @change="initTelemetryData()">
                 <option value="none">none</option>
                 <option v-for="tenant in tenants" :value="tenant.name">{{ tenant.name }}</option>
               </select>
             </div>
             <div class="custom-select">
               <h1 class="text-sm text-label-secondary">Device Type</h1>
-              <select class="custom-select-option" name="type" id="type" v-model="selectedDeviceType" @change="initTypesList()">
+              <select class="custom-select-option" name="type" id="type" v-model="selectedDeviceType"
+                @change="initTypesList()">
                 <option value="All">All</option>
                 <option v-for="data in types" :value="data.name">{{ data.name }}</option>
               </select>

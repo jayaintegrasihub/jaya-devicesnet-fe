@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import telemetryAPI from '@/services/telemetry/telemetry-api'
 import { ref } from 'vue'
 import moment from 'moment'
+import { createEventSource } from '@/services/sse'
 
 function rssiToDbm(rssi) {
   const minDbm = -100;
@@ -30,6 +31,20 @@ function formatUptime(uptimeInSeconds) {
 
   return formattedString.trim();
 }
+function convertToArray(data) {
+  let result = [];
+
+  for (let key in data) {
+    if (data.hasOwnProperty(key)) {
+      result.push({
+        timestamp: data[key]._time,
+        tag: key,
+        value: data[key]._value
+      });
+    }
+  }
+  return result;
+}
 
 export const useTelemetryStore = defineStore('Telemetry', {
   state: () => ({
@@ -49,28 +64,61 @@ export const useTelemetryStore = defineStore('Telemetry', {
     gatewaysData: ref([]),
     nodesData: ref([]),
     telemetryData: ref([]),
-    getTelemetryStatus: ref({
+    getTelemetryDetailStatus: ref({
       isError: null,
       message: null,
       code: null,
     }),
-    getTelemetryDataLoading: ref(false)
+    getTelemetryDetailLoading: ref(false),
+    eventSource: null,
+    eventData: ref(),
+    statusDeviceDetail: ref({}),
+    deviceDataLogs: ref('')
   }),
   actions: {
-    async getTelemetryData(tenant, type) {
-      this.getTelemetryDataLoading = true
+    async getTelemetryDetail(serialNumber) {
+      this.getTelemetryDetailLoading = true
       try {
-        const res = await telemetryAPI.getTelemetryData(tenant, type)
-        let gateways = res.data.statusDevices.gateways
+        const res = await telemetryAPI.getTelemetryDetail(serialNumber)
+        this.statusDeviceDetail = res.data.statusDevice
+        this.statusDeviceDetail._time = new Date(this.statusDeviceDetail._time).toLocaleString()
+        this.statusDeviceDetail.humidity = this.statusDeviceDetail.humidity.toFixed(1)
+        this.statusDeviceDetail.temperature = this.statusDeviceDetail.temperature.toFixed(1)
+        this.statusDeviceDetail.uptime = formatUptime(this.statusDeviceDetail.uptime)
+        this.statusDeviceDetail.rssi = Math.floor(rssiToDbm(this.statusDeviceDetail.rssi))
+
+        this.deviceDataLogs = convertToArray(res.data.telemetry)
+        this.deviceDataLogs.map((data) => {
+          data.timestamp = new Date(data.timestamp).toLocaleString()
+        })
+        console.log(this.deviceDataLogs)
+        this.getTelemetryDetailLoading = false
+        this.getTelemetryDetailStatus.code = res.status
+        this.getTelemetryDetailStatus.message = 'Data Fetched'
+        this.getTelemetryDetailStatus.isError = false
+      } catch (err) {
+        console.error(err)
+        this.getTelemetryDetailLoading = false
+        this.getTelemetryDetailStatus.code = err.response.data.status
+        this.getTelemetryDetailStatus.message = JSON.stringify(err.response.data.data)
+        this.getTelemetryDetailStatus.isError = true
+        return err
+      }
+    },
+    startListening(tenant, type, callback) {
+      this.eventSource = createEventSource(tenant, type)
+      this.eventSource.onmessage = (event) => {
+        this.eventData = JSON.parse(event.data).data
+        console.log(this.eventData)
+        let gateways = this.eventData.statusDevices.gateways
         let onlineGatewaysList = gateways.filter((data) => data.status === 'ONLINE')
         let offlineGatewaysList = gateways.filter((data) => data.status === 'OFFLINE')
-        let nodes = res.data.statusDevices.nodes
+        let nodes = this.eventData.statusDevices.nodes
         let onlineNodesList = nodes.filter((data) => data.status === 'ONLINE')
         let offlineNodesList = nodes.filter((data) => data.status === 'OFFLINE')
         this.totalGateways = gateways.length
         this.totalNodes = nodes.length
         this.totalDevices = this.totalGateways + this.totalNodes
-        this.getTelemetryDataLoading = false
         this.onlineGateways = onlineGatewaysList.length
         this.offlineGateways = offlineGatewaysList.length
         this.onlineNodes = onlineNodesList.length
@@ -82,7 +130,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.offlineDevices.map((data) => {
           data._time = new Date(data._time).toLocaleString()
         })
-        this.lastUpdated = new Date(res.data.statusDevices.timeNow).toLocaleString()
+        this.lastUpdated = new Date(this.eventData.statusDevices.timeNow).toLocaleString()
 
         this.gatewaysData = gateways
         this.gatewaysData.map((data) => {
@@ -92,6 +140,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
           data.uptime = formatUptime(data.uptime)
           data.rssi = Math.floor(rssiToDbm(data.rssi))
         })
+
         this.nodesData = nodes
         this.nodesData.map((data) => {
           data._time = new Date(data._time).toLocaleString()
@@ -106,15 +155,20 @@ export const useTelemetryStore = defineStore('Telemetry', {
         } else {
           this.isNoDevices = false
         }
-
-      } catch (err) {
-        console.error(err)
-        this.getTelemetryDataLoading = false
-        this.getTelemetryStatus.code = err.response.data.status
-        this.getTelemetryStatus.message = JSON.stringify(err.response.data.data)
-        this.getTelemetryStatus.isError = true
-        return err
+        if (this.eventData) {
+          callback()
+        }
       }
-    }
+      this.eventSource.onerror = (err) => {
+        console.error('EventSource failed:', err)
+        this.stopListening(); // Stop listening on error
+      }
+    },
+    stopListening() {
+      if (this.eventSource) {
+        this.eventSource.close()
+        this.eventSource = null
+      }
+    },
   }
 })

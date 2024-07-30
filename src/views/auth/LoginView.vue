@@ -14,7 +14,6 @@ import { loginSchema } from '@/composable/authSchema'
   
   const onSubmit = async (values, { resetForm }) => {
     await authStore.signIn(values)
-    console.log(values)
     modalActive.value = true
     setTimeout(closeNotification, 5000)
     resetForm()

@@ -38,6 +38,8 @@ const { type, types } = storeToRefs(useTypesStore())
 const selectedDeviceType = useLocalStorage('SelectedDeviceType', 'All')
 
 async function initTypesList() {
+  gatewaysGroupBy.value = []
+  nodesGroupBy.value = []
   await initTelemetryData()
   await typeStore.getTypes()
   if (selectedDeviceType.value !== 'All') {
@@ -53,14 +55,35 @@ const findByName = (array, name) => {
 ///telemetry
 const telemetryStore = useTelemetryStore()
 const { eventData, isNoDevices, nodesData, gatewaysData, lastUpdated, isThereOfflineDevice, offlineDevices, telemetryData, totalDevices, totalGateways, totalNodes, totalOffline, totalOnline, onlineGateways, onlineNodes, offlineGateways, offlineNodes } = storeToRefs(useTelemetryStore())
+const groupedGatewaysData = ref({})
+const gatewaysGroupBy = useLocalStorage('GatewaysGroupBy', [])
 const groupedNodesData = ref({})
 const nodesGroupBy = useLocalStorage('NodesGroupBy', [])
+
+// Watch for changes in nodesGroupBy
+watch(gatewaysGroupBy, async (value) => {
+  groupingGatewaysData()
+}, { deep: true })
 
 // Watch for changes in nodesGroupBy
 watch(nodesGroupBy, async (value) => {
   groupingNodesData()
 }, { deep: true })
 
+function groupingGatewaysData() {
+  if (gatewaysGroupBy.value.length === 0) {
+    groupedGatewaysData.value = gatewaysData.value
+  } else {
+    groupedGatewaysData.value = nestGroupsBy(gatewaysData.value, gatewaysGroupBy.value)
+  }
+}
+
+function removeGatewaysGroup(element) {
+  const index = gatewaysGroupBy.value.indexOf(element);
+  if (index > -1) {
+    gatewaysGroupBy.value.splice(index, 1);
+  }
+}
 function groupingNodesData() {
   if (nodesGroupBy.value.length === 0) {
     groupedNodesData.value = nodesData.value
@@ -69,7 +92,7 @@ function groupingNodesData() {
   }
 }
 
-function removeGroup(element) {
+function removeNodesGroup(element) {
   const index = nodesGroupBy.value.indexOf(element);
   if (index > -1) {
     nodesGroupBy.value.splice(index, 1);
@@ -82,12 +105,14 @@ async function initTelemetryData() {
   if (selectedDeviceType.value === 'All') {
     telemetryStore.startListening(selectedTenant.value, undefined, () => {
       groupingNodesData()
+      groupingGatewaysData()
       initTableChartData()
     })
     // await telemetryStore.getTelemetryData(selectedTenant.value)
   } else {
     telemetryStore.startListening(selectedTenant.value, selectedDeviceType.value, () => {
       groupingNodesData()
+      groupingGatewaysData()
       initTableChartData()
     })
     // await telemetryStore.getTelemetryData(selectedTenant.value, { type: selectedDeviceType.value })
@@ -107,7 +132,6 @@ function initTableChartData() {
   availableNodesFwVersion.value = Object.keys(tmpNodesFirmwareVersionTableData.value)
   selectedNodesFw.value = availableNodesFwVersion.value[0]
   nodesFirmwareVersionTableData.value = tmpNodesFirmwareVersionTableData.value[selectedNodesFw.value] === undefined ? [] : tmpNodesFirmwareVersionTableData.value[selectedNodesFw.value]
-  console.log(nodesFirmwareVersionTableData.value)
   //chart data
   const tmpGatewaysFirmwareVersionBarChartData = gatewaysData.value.reduce((acc, item) => {
     const { fwVersion } = item;
@@ -140,6 +164,8 @@ function initTableChartData() {
 
 /// experimental
 function nestGroupsBy(arr, properties) {
+  console.log(arr, properties)
+
   properties = Array.from(properties);
   if (properties.length === 1) {
     return groupBy(arr, properties[0]);
@@ -149,17 +175,9 @@ function nestGroupsBy(arr, properties) {
   for (let key in grouped) {
     grouped[key] = nestGroupsBy(grouped[key], Array.from(properties));
   }
-  return grouped;
+  return grouped
 }
 
-/**
- * Group objects by property.
- * `nestGroupsBy` helper method.
- *
- * @param {String} property
- * @param {Object[]} conversions
- * @returns {Object}
- */
 function groupBy(conversions, property) {
   return conversions.reduce((acc, obj) => {
     let key = obj[property];
@@ -465,7 +483,7 @@ function goToDeviceDetailPage(id) {
                   class="bg-var-red rounded-[4px] px-[20px] py-[20px] text-white  flex flex-col gap-2 justify-start over">
                   <div class="flex justify-between">
                     <!-- <p class="text-sm">{{ data.device }}</p> -->
-                    <p class="text-xs">Last Heard: {{ data._time }}</p>
+                    <p class="text-xs">Last Heard: {{ data.lastHeard }}</p>
                   </div>
                   <label class="text-sm font-semibold">{{ data.alias }} - {{ data.device }}</label>
                 </div>
@@ -506,11 +524,42 @@ function goToDeviceDetailPage(id) {
               <div class="flex flex-col gap-4">
                 <div
                   class="flex justify-between items-center border border-bkg-tertiary border-opacity-60 rounded-[8px] px-6 py-2 shadow-md gap-2 font-semibold bg-bkg-secondary text-label-primary">
-                  Gateways
+                  <p>
+                    Gateways
+                  </p>
+                  <div class="flex items-center gap-3" v-if="selectedDeviceType !== 'All'">
+                    <h1 class="text-label-primary text-sm font-medium">Group By</h1>
+                    <div class="flex gap-1">
+                      <div @click="removeGatewaysGroup(group)"
+                        class="bg-[#E2EBF6] border text-[#3962EB] px-2 py-1 rounded-full cursor-pointer text-xs font-sembold"
+                        v-for="group in gatewaysGroupBy">
+                        {{ group }}
+                      </div>
+                    </div>
+                    <div class="dropdown">
+                      <div class="p-2 rounded-lg cursor-pointer bg-bkg-tertiary">
+                        <img src="../../assets/group-icon.svg" alt="" height="16px" width="16px">
+                      </div>
+                      <div class="dropdown-content">
+                        <div v-for="(option, index) in type.groups" :key="index" class="">
+                          <label class="cursor-pointer select-none">
+                            <input class="cursor-pointer sr-only peer" type="checkbox" id="" :value="option"
+                              v-model="gatewaysGroupBy"
+                              :disabled="gatewaysGroupBy.length >= 2 && !gatewaysGroupBy.includes(option)">
+                            <div
+                              class="font-normal peer-checked:text-[#3962EB] text-sm rounded-lg w-full h-6 bg-gray-200 peer peer-checked:bg-[#E2EBF6]">
+                              <p class="h-full flex items-center justify-center ">{{ option }}</p>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  <div
-                    class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2"
+
+                <div v-if="gatewaysGroupBy.length === 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div @click="goToDeviceDetailPage(data.device)"
+                    class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200"
                     v-for="data in gatewaysData">
                     <div class="flex justify-between items-center">
                       <div class="flex gap-5 items-center">
@@ -529,9 +578,16 @@ function goToDeviceDetailPage(id) {
                           <p class="font-medium text-label-primary opacity-80">SN:</p>
                           <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
                         </div>
-                        <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                        <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
                           <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
                           <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                          <div class="dropdown">
+                            <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
+                              class="cursor-pointer">
+                            <div class="dropdown-content w-full">
+                              {{ data.lastHeard }} ago
+                            </div>
+                          </div>
                         </div>
                         <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
                           <p class="text-label-primary font-medium opacity-80">Humidity:</p>
@@ -563,6 +619,158 @@ function goToDeviceDetailPage(id) {
                     </div>
                   </div>
                 </div>
+
+                <div v-if="gatewaysGroupBy.length == 1" v-for="( value, key ) in groupedGatewaysData"
+                  class="flex flex-col gap-4">
+                  <div class="px-6 py-2 bg-bkg-secondary rounded-[8px]">
+                    <h1 class="text-label-primary font-semibold">
+                      {{ gatewaysGroupBy[0] }} {{ key }}
+                    </h1>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                    <div @click="goToDeviceDetailPage(data.device)"
+                      class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200"
+                      v-for="data in value">
+                      <div class="flex justify-between items-center">
+                        <div class="flex gap-5 items-center">
+                          <BaseIndicator :status="data.status" />
+                          <h1 class="font-medium text-base sm:text-lg text-label-primary">
+                            {{ data.alias }}
+                          </h1>
+                        </div>
+                        <div>
+                          <SignalIndicator :status=data.rssi />
+                        </div>
+                      </div>
+                      <div class="grid grid-cols-1 xl:grid-cols-2 justify-between">
+                        <div class="flex flex-col gap-1">
+                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                            <p class="font-medium text-label-primary opacity-80">SN:</p>
+                            <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
+                          </div>
+                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
+                            <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
+                            <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                            <div class="dropdown">
+                              <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
+                                class="cursor-pointer">
+                              <div class="dropdown-content w-full">
+                                {{ data.lastHeard }} ago
+                              </div>
+                            </div>
+                          </div>
+                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                            <p class="text-label-primary font-medium opacity-80">Humidity:</p>
+                            <p class="text-label-primary font-semibold opacity-90">{{ data.humidity }}%</p>
+                          </div>
+                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                            <p class="text-label-primary font-medium opacity-80">Temperature:</p>
+                            <p class="text-label-primary font-semibold opacity-90">{{ data.temperature }}°C</p>
+                          </div>
+                        </div>
+                        <div class="flex flex-col gap-1">
+                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                            <p class="text-label-primary font-medium opacity-80">Fw Version:</p>
+                            <p class="text-label-primary font-semibold opacity-90">{{ data.fwVersion }}</p>
+                          </div>
+                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                            <p class="text-label-primary font-medium opacity-80">Hw Version:</p>
+                            <p class="text-label-primary font-semibold opacity-90">{{ data.hwVersion }}</p>
+                          </div>
+                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                            <p class="text-label-primary font-medium opacity-80">Lora dBm:</p>
+                            <p class="text-label-primary font-semibold opacity-90">{{ data.rssi }}</p>
+                          </div>
+                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                            <p class="text-label-primary font-medium opacity-80">Uptime:</p>
+                            <p class="text-label-primary font-semibold opacity-90">{{ data.uptime }}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="gatewaysGroupBy.length > 1" class="flex flex-col gap-4">
+                  <div v-for="(outerGroup, outerKey) in groupedGatewaysData" :key="outerKey"
+                    class="rounded-[16px] bg-bkg-secondary p-[10px] flex flex-col gap-4">
+                    <div class="p-[6px]">
+                      <h1 class="text-label-primary font-semibold text-normal">
+                        {{ gatewaysGroupBy[0] }} {{ outerKey }}
+                      </h1>
+                    </div>
+                    <div v-for="(innerGroup, innerKey) in outerGroup" :key="innerKey"
+                      class="bg-bkg-primary p-[10px] rounded-[11px] border border-bkg-tertiary">
+                      <div class="p-[6px]">
+                        <h2 class="text-label-primary font-medium text-normal">
+                          {{ gatewaysGroupBy[1] }} {{ innerKey }}
+                        </h2>
+                      </div>
+                      <div class="grid grid-cols-3">
+                        <div v-for="data in innerGroup" :key="data.device" @click="goToDeviceDetailPage(data.device)"
+                          class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200">
+                          <div class="flex justify-between items-center">
+                            <div class="flex gap-5 items-center">
+                              <BaseIndicator :status="data.status" />
+                              <h1 class="font-medium text-base sm:text-lg text-label-primary">
+                                {{ data.alias }}
+                              </h1>
+                            </div>
+                            <div>
+                              <SignalIndicator :status="data.rssi" />
+                            </div>
+                          </div>
+                          <div class="grid grid-cols-1 xl:grid-cols-2 justify-between">
+                            <div class="flex flex-col gap-1">
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="font-medium text-label-primary opacity-80">SN:</p>
+                                <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
+                                <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                                <div class="dropdown">
+                                  <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
+                                    class="cursor-pointer">
+                                  <div class="dropdown-content w-full">
+                                    {{ data.lastHeard }} ago
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Humidity:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.humidity }}%</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Temperature:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.temperature }}°C</p>
+                              </div>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Fw Version:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.fwVersion }}</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Hw Version:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.hwVersion }}</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Lora dBm:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.rssi }}</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Uptime:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.uptime }}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
               </div>
               <div class="flex flex-col gap-4">
                 <div
@@ -573,7 +781,7 @@ function goToDeviceDetailPage(id) {
                   <div class="flex items-center gap-3" v-if="selectedDeviceType !== 'All'">
                     <h1 class="text-label-primary text-sm font-medium">Group By</h1>
                     <div class="flex gap-1">
-                      <div @click="removeGroup(group)"
+                      <div @click="removeNodesGroup(group)"
                         class="bg-[#E2EBF6] border text-[#3962EB] px-2 py-1 rounded-full cursor-pointer text-xs font-sembold"
                         v-for="group in nodesGroupBy">
                         {{ group }}
@@ -593,25 +801,12 @@ function goToDeviceDetailPage(id) {
                               class="font-normal peer-checked:text-[#3962EB] text-sm rounded-lg w-full h-6 bg-gray-200 peer peer-checked:bg-[#E2EBF6]">
                               <p class="h-full flex items-center justify-center ">{{ option }}</p>
                             </div>
-
                           </label>
                         </div>
                       </div>
                     </div>
-
                   </div>
-                  <!-- <div class="grid grid-cols-3 items-center gap-4" v-if="selectedDeviceType !== 'All'">
-                    <h1 class="text-label-primary font-medium">Group By</h1>
-                    <div class="custom-select-2 col-span-2">
-                      <select name="nodesGroupBy" id="nodesGroupBy" v-model="nodesGroupBy">
-                        <option value="none">none</option>
-                        <option v-for="(option, index) in type.groups" :key="index" :value="option">{{ option }}
-                        </option>
-                      </select>
-                    </div>
-                  </div> -->
                 </div>
-
                 <div v-if="nodesGroupBy.length === 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   <div @click="goToDeviceDetailPage(data.device)"
                     class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200"
@@ -633,9 +828,16 @@ function goToDeviceDetailPage(id) {
                           <p class="font-medium text-label-primary opacity-80">SN:</p>
                           <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
                         </div>
-                        <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                        <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
                           <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
                           <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                          <div class="dropdown">
+                            <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
+                              class="cursor-pointer">
+                            <div class="dropdown-content w-full">
+                              {{ data.lastHeard }} ago
+                            </div>
+                          </div>
                         </div>
                         <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
                           <p class="text-label-primary font-medium opacity-80">Humidity:</p>
@@ -676,8 +878,8 @@ function goToDeviceDetailPage(id) {
                     </h1>
                   </div>
                   <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                    <div
-                      class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2"
+                    <div @click="goToDeviceDetailPage(data.device)"
+                      class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200"
                       v-for="data in value">
                       <div class="flex justify-between items-center">
                         <div class="flex gap-5 items-center">
@@ -696,9 +898,16 @@ function goToDeviceDetailPage(id) {
                             <p class="font-medium text-label-primary opacity-80">SN:</p>
                             <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
                           </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
                             <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
                             <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                            <div class="dropdown">
+                              <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
+                                class="cursor-pointer">
+                              <div class="dropdown-content w-full">
+                                {{ data.lastHeard }} ago
+                              </div>
+                            </div>
                           </div>
                           <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
                             <p class="text-label-primary font-medium opacity-80">Humidity:</p>
@@ -733,40 +942,31 @@ function goToDeviceDetailPage(id) {
                 </div>
 
                 <div v-if="nodesGroupBy.length > 1" class="flex flex-col gap-4">
-                  <!-- Iterate over the outermost grouping -->
-
                   <div v-for="(outerGroup, outerKey) in groupedNodesData" :key="outerKey"
                     class="rounded-[16px] bg-bkg-secondary p-[10px] flex flex-col gap-4">
-                    <!-- Display the outermost group title -->
                     <div class="p-[6px]">
                       <h1 class="text-label-primary font-semibold text-normal">
                         {{ nodesGroupBy[0] }} {{ outerKey }}
                       </h1>
                     </div>
-
-                    <!-- Iterate over the first level of inner grouping -->
                     <div v-for="(innerGroup, innerKey) in outerGroup" :key="innerKey"
                       class="bg-bkg-primary p-[10px] rounded-[11px] border border-bkg-tertiary">
-                      <!-- Display the first level inner group title -->
                       <div class="p-[6px]">
                         <h2 class="text-label-primary font-medium text-normal">
                           {{ nodesGroupBy[1] }} {{ innerKey }}
                         </h2>
                       </div>
                       <div class="grid grid-cols-3">
-                        <!-- Iterate over the items in each nested array -->
-                        <div v-for="data in innerGroup" :key="data.device"
-                          class="border border-bkg-tertiary border-opacity-60 rounded-[8px] px-6 py-6 flex flex-col gap-2 bg-bkg-primary shadow-sm">
+                        <div v-for="data in innerGroup" :key="data.device" @click="goToDeviceDetailPage(data.device)"
+                          class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200">
                           <div class="flex justify-between items-center">
                             <div class="flex gap-5 items-center">
-                              <!-- Assuming BaseIndicator and SignalIndicator are components or placeholders -->
                               <BaseIndicator :status="data.status" />
                               <h1 class="font-medium text-base sm:text-lg text-label-primary">
                                 {{ data.alias }}
                               </h1>
                             </div>
                             <div>
-                              <!-- Assuming SignalIndicator is a component for signal strength -->
                               <SignalIndicator :status="data.rssi" />
                             </div>
                           </div>
@@ -776,9 +976,16 @@ function goToDeviceDetailPage(id) {
                                 <p class="font-medium text-label-primary opacity-80">SN:</p>
                                 <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
                               </div>
-                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
                                 <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
                                 <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                                <div class="dropdown">
+                                  <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
+                                    class="cursor-pointer">
+                                  <div class="dropdown-content w-full">
+                                    {{ data.lastHeard }} ago
+                                  </div>
+                                </div>
                               </div>
                               <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
                                 <p class="text-label-primary font-medium opacity-80">Humidity:</p>
@@ -813,7 +1020,6 @@ function goToDeviceDetailPage(id) {
                     </div>
                   </div>
                 </div>
-
               </div>
             </div>
           </div>
@@ -922,13 +1128,18 @@ p {
   @apply bg-bkg-primary
 } */
 
+.info-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
 .dropdown {
   position: relative;
   display: inline-block;
 }
 
 .dropdown-content {
-  @apply opacity-0 absolute right-0 bg-bkg-secondary rounded-lg z-10 border min-w-[160px] shadow-lg transition-opacity ease-in-out delay-100 duration-300 p-4 flex flex-col gap-1
+  @apply opacity-0 absolute right-0 bg-bkg-secondary rounded-lg z-10 border min-w-[180px] shadow-lg transition-opacity ease-in-out delay-100 duration-300 p-4 flex flex-col gap-1
 }
 
 .dropdown:hover>.dropdown-content {

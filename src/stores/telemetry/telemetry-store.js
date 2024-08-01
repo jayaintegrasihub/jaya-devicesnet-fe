@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import telemetryAPI from '@/services/telemetry/telemetry-api'
 import { ref } from 'vue'
 import moment from 'moment'
-import { createEventSource } from '@/services/sse'
+import { createStatusDeviceEventSource, createDeviceDetailsEventSource } from '@/services/sse'
 
 function rssiToDbm(rssi) {
   const minDbm = -100;
@@ -73,7 +73,9 @@ export const useTelemetryStore = defineStore('Telemetry', {
     }),
     getTelemetryDetailLoading: ref(false),
     eventSource: null,
+    telemetryDetailEventSource: null,
     eventData: ref(),
+    detailEventData: ref(),
     statusDeviceDetail: ref({}),
     deviceDataLogs: ref('')
   }),
@@ -107,8 +109,32 @@ export const useTelemetryStore = defineStore('Telemetry', {
         return err
       }
     },
+    listenTelemetryDetail(serialNumber) {
+      this.getTelemetryDetailLoading = true
+      this.telemetryDetailEventSource = createDeviceDetailsEventSource(serialNumber)
+      this.telemetryDetailEventSource.onmessage = (event) => {
+        this.detailEventData = JSON.parse(event.data).data.telemetry
+        console.log(this.detailEventData)
+        this.statusDeviceDetail = this.detailEventData.statusDevice
+        this.statusDeviceDetail._time = new Date(this.statusDeviceDetail._time).toLocaleString()
+        this.statusDeviceDetail.humidity = this.statusDeviceDetail.humidity.toFixed(1)
+        this.statusDeviceDetail.temperature = this.statusDeviceDetail.temperature.toFixed(1)
+        this.statusDeviceDetail.uptime = formatUptime(this.statusDeviceDetail.uptime)
+        this.statusDeviceDetail.rssi = Math.floor(rssiToDbm(this.statusDeviceDetail.rssi))
+        this.deviceDataLogs = convertToArray(this.detailEventData.telemetry)
+        this.deviceDataLogs.map((data) => {
+          data.timestamp = new Date(data.timestamp).toLocaleString()
+        })
+      }
+    },
+    stopListenTelemetryDetail() {
+      if (this.telemetryDetailEventSource) {
+        this.telemetryDetailEventSource.close()
+        this.telemetryDetailEventSource = null
+      }
+    },
     startListening(tenant, type, callback) {
-      this.eventSource = createEventSource(tenant, type)
+      this.eventSource = createStatusDeviceEventSource(tenant, type)
       this.eventSource.onmessage = (event) => {
         this.eventData = JSON.parse(event.data).data
         console.log(this.eventData)
@@ -137,7 +163,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.gatewaysData = gateways
         this.gatewaysData.map((data) => {
           data._time = new Date(data._time).toLocaleString()
-          data.lastHeard = formatUptime(Math.floor((new Date() - new Date(data._time))/1000))
+          data.lastHeard = formatUptime(Math.floor((new Date() - new Date(data._time)) / 1000))
           data.humidity = data.humidity.toFixed(1)
           data.temperature = data.temperature.toFixed(1)
           data.uptime = formatUptime(data.uptime)
@@ -147,7 +173,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.nodesData = nodes
         this.nodesData.map((data) => {
           data._time = new Date(data._time).toLocaleString()
-          data.lastHeard = formatUptime(Math.floor((new Date() - new Date(data._time))/1000))
+          data.lastHeard = formatUptime(Math.floor((new Date() - new Date(data._time)) / 1000))
           data.humidity = data.humidity.toFixed(1)
           data.temperature = data.temperature.toFixed(1)
           data.uptime = formatUptime(data.uptime)

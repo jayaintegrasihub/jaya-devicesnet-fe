@@ -23,7 +23,7 @@ async function refreshToken() {
   }
 }
 
-export function createEventSource(tenant, type) {
+export function createStatusDeviceEventSource(tenant, type) {
   let url;
 
   if (type === undefined) {
@@ -31,6 +31,34 @@ export function createEventSource(tenant, type) {
   } else {
     url = `${import.meta.env.VITE_APP_API_URL}telemetry/access-token/status-device/sse/${tenant}?type=${type}`;
   }
+
+  const createNewEventSource = () => {
+    const eventSource = new EventSourcePolyfill(url, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('auth.accessToken')}`,
+      },
+    });
+
+    eventSource.addEventListener('error', async (event) => {
+      if (event.status === 401) {
+        const tokenRefreshed = await refreshToken();
+        if (tokenRefreshed) {
+          eventSource.close();
+          createNewEventSource();
+        }
+      }
+    });
+
+    return eventSource;
+  };
+
+  return createNewEventSource();
+}
+
+
+export function createDeviceDetailsEventSource(serialNumber) {
+  
+  let url = `${import.meta.env.VITE_APP_API_URL}telemetry/details/sse/${serialNumber}`
 
   const createNewEventSource = () => {
     const eventSource = new EventSourcePolyfill(url, {

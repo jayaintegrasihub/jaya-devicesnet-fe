@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted,onUnmounted, ref } from 'vue'
 import IconButton from '@/components/input/IconButton.vue'
 import BaseIndicator from '@/components/indicator/BaseIndicator.vue'
 import { storeToRefs } from 'pinia'
@@ -15,7 +15,11 @@ function goBack() {
 }
 
 onMounted(async () => {
-  await telemetryStore.getTelemetryDetail(props.id)
+  telemetryStore.listenTelemetryDetail(props.id)
+})
+
+onUnmounted(() => {
+  telemetryStore.stopListenTelemetryDetail()
 })
 
 
@@ -140,7 +144,7 @@ const items = []
           <div class="flex flex-col gap-6">
             <h1 class="text-accent-1 font-medium text-lg">Data Logs</h1>
             <EasyDataTable fixed-header table-class-name="customize-table table-scroll" :headers="header"
-              :items="deviceDataLogs" hide-footer theme-color="#1363df" :loading="getTelemetryDetailLoading">
+              :items="deviceDataLogs" hide-footer theme-color="#1363df">
             </EasyDataTable>
           </div>
         </div>
@@ -148,7 +152,7 @@ const items = []
         <div class="flex flex-col gap-6">
           <h1 class="text-accent-1 font-medium text-lg">Changelog</h1>
           <EasyDataTable :rows-per-page="10" table-class-name="customize-table table-scroll" :headers="header"
-            :items="items" theme-color="#1363df" :loading="isLoading"></EasyDataTable>
+            :items="items" theme-color="#1363df"></EasyDataTable>
         </div>
       </div>
     </div>

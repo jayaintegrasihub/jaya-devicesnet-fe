@@ -579,8 +579,10 @@ function goToDeviceDetailPage(id) {
                           <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
                         </div>
                         <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
-                          <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
-                          <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                          <div class="flex flex-col gap-1">
+                            <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
+                            <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                          </div>
                           <div class="dropdown">
                             <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
                               class="cursor-pointer">
@@ -649,8 +651,10 @@ function goToDeviceDetailPage(id) {
                             <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
                           </div>
                           <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
-                            <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                            <div class="flex flex-col gap-1">
+                              <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
+                              <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                            </div>
                             <div class="dropdown">
                               <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
                                 class="cursor-pointer">
@@ -727,8 +731,10 @@ function goToDeviceDetailPage(id) {
                                 <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
                               </div>
                               <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
-                                <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
-                                <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                                <div class="flex flex-col gap-1">
+                                  <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
+                                  <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                                </div>
                                 <div class="dropdown">
                                   <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
                                     class="cursor-pointer">
@@ -829,8 +835,10 @@ function goToDeviceDetailPage(id) {
                           <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
                         </div>
                         <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
-                          <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
-                          <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                          <div class="flex flex-col gap-1">
+                            <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
+                            <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                          </div>
                           <div class="dropdown">
                             <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
                               class="cursor-pointer">
@@ -899,8 +907,10 @@ function goToDeviceDetailPage(id) {
                             <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
                           </div>
                           <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
-                            <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                            <div class="flex flex-col gap-1">
+                              <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
+                              <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                            </div>
                             <div class="dropdown">
                               <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
                                 class="cursor-pointer">
@@ -977,8 +987,10 @@ function goToDeviceDetailPage(id) {
                                 <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
                               </div>
                               <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
-                                <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
-                                <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                                <div class="flex flex-col gap-1">
+                                  <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
+                                  <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                                </div>
                                 <div class="dropdown">
                                   <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
                                     class="cursor-pointer">

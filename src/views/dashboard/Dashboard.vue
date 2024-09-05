@@ -108,14 +108,12 @@ async function initTelemetryData() {
       groupingGatewaysData()
       initTableChartData()
     })
-    // await telemetryStore.getTelemetryData(selectedTenant.value)
   } else {
     telemetryStore.startListening(selectedTenant.value, selectedDeviceType.value, () => {
       groupingNodesData()
       groupingGatewaysData()
       initTableChartData()
     })
-    // await telemetryStore.getTelemetryData(selectedTenant.value, { type: selectedDeviceType.value })
   }
 
 }
@@ -476,7 +474,6 @@ function goToDeviceDetailPage(id) {
             <div class="flex flex-col gap-2">
               <div class="flex justify-between items-center">
                 <p class="text-lg text-label-primary font-semibold">Offline devices</p>
-                <p class="text-sm text-var-blue">show all offline devices ></p>
               </div>
               <div class="flex flex-col gap-2 h-[280px] overflow-y-auto">
                 <div v-for="data in offlineDevices"

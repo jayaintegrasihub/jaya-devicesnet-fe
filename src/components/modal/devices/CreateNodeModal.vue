@@ -1,4 +1,5 @@
 <template>
+  <alert :message="status.message" :modalActive="modalActive" :isError="status.isError" @close="closeNotification" />
   <transition name="fade">
     <div class="modal" v-show="isOpen">
       <transition name="drop-in">
@@ -28,7 +29,7 @@
                 <BasicInput name="description" type="text" placeholder="Notes" label="Notes" />
                 <div class="flex justify-between gap-10">
                   <BasicButton type="button" class="secondary" :label="cancelLabel" @click="cancelForm" />
-                  <BasicButton type="submit" class="primary" :label="registerLabel" />
+                  <BasicButton type="submit" class="primary" :label="registerLabel" :loading="createNodeLoading" />
                 </div>
               </form>
             </VeeForm>
@@ -95,11 +96,11 @@ const schema = yup.object({
 
 //stores
 const typesStore = useTypesStore()
-const { types, type, status, isLoading } = storeToRefs(useTypesStore())
+const { types, type } = storeToRefs(useTypesStore())
 const tenantsStore = useTenantsStore()
 const { tenants } = storeToRefs(useTenantsStore())
 const nodesStore = useNodesStore()
-const { nodes } = storeToRefs(useNodesStore())
+const { status, createNodeLoading } = storeToRefs(useNodesStore())
 
 //alert control
 const modalActive = ref(false)

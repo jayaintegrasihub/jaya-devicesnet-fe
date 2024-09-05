@@ -1,4 +1,6 @@
 <template>
+  <alert :message="createGatewayStatus.message" :modalActive="modalActive" :isError="createGatewayStatus.isError"
+    @close="closeNotification" />
   <transition name="fade">
     <div class="modal" v-show="isOpen">
       <transition name="drop-in">
@@ -27,7 +29,7 @@
                 <BasicInput name="description" type="text" placeholder="Notes" label="Notes" />
                 <div class="flex justify-between gap-10">
                   <BasicButton type="button" class="secondary" :label="cancelLabel" @click="cancelForm" />
-                  <BasicButton type="submit" class="primary" :label="registerLabel" />
+                  <BasicButton type="submit" class="primary" :label="registerLabel" :loading="createGatewayLoading" />
                 </div>
               </form>
             </VeeForm>
@@ -97,11 +99,11 @@ const schema = yup.object({
 
 //stores
 const typesStore = useTypesStore()
-const { types, type, status, isLoading } = storeToRefs(useTypesStore())
+const { types, type } = storeToRefs(useTypesStore())
 const tenantsStore = useTenantsStore()
 const { tenants } = storeToRefs(useTenantsStore())
 const gatewaysStore = useGatewaysStore()
-const { gateways } = storeToRefs(useGatewaysStore())
+const { createGatewayStatus, createGatewayLoading } = storeToRefs(useGatewaysStore())
 
 //alert control
 const modalActive = ref(false)
@@ -160,7 +162,7 @@ const onSubmit = async (values, { resetForm }) => {
   if (regButtonClick.value == 2) {
     await gatewaysStore.createGateway(payload)
     modalActive.value = true
-    if (status.value.isError) {
+    if (createGatewayStatus.value.isError) {
       setTimeout(closeNotification, 3000)
     } else {
       setTimeout(closeNotification, 3000)

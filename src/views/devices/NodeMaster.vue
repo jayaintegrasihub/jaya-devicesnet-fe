@@ -16,7 +16,7 @@ onMounted(async () => {
 //stores
 const loadingStore = useLoadingStore()
 const nodesStore = useNodesStore()
-const { nodes, getNodesLoading } = storeToRefs(useNodesStore())
+const { nodes, getNodesLoading, deleteNodeLoading, status } = storeToRefs(useNodesStore())
 
 const modalActive = ref(false)
 const searchValue = ref()
@@ -76,12 +76,12 @@ function editModalToggle(item) {
     :formData="formData" />
   <DeleteConfirmationModal :isOpen="isDelModalPops" @close="isDelModalPops = false" :item="selectedItem.alias"
     @delete="deleteItem" />
-  <!-- <alert 
+  <alert 
     :message ="status.message"
     :modalActive="modalActive"
     :isError="status.isError"
      @close="closeNotification"
-  /> -->
+  />
   <div class="mx-8 grid grid-row gap-6 md:gap-10">
     <div class="flex flex-col md:flex-row gap-4 md:justify-between">
       <SearchBar v-model="searchValue" />

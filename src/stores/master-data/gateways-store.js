@@ -81,11 +81,13 @@ export const useGatewaysStore = defineStore('Gateways', {
         const res = await gatewaysAPI.deleteGateway(id)
         console.log(res)
         this.deleteGatewayLoading = false
+        this.createGatewayStatus.isError = false
         this.deleteGatewayStatus.message = 'Data Deleted'
         this.deleteGatewayStatus.code = res.status
       } catch (err) {
         console.error(err)
         this.deleteGatewayLoading = false
+        this.createGatewayStatus.isError = true
         this.deleteGatewayStatus.message = err.response.data.error
         this.deleteGatewayStatus.code = err.response.data.status
         return err
@@ -97,11 +99,13 @@ export const useGatewaysStore = defineStore('Gateways', {
         const res = await gatewaysAPI.editGateway(id, data)
         console.log(res)
         this.editGatewayLoading = false
+        this.createGatewayStatus.isError = false
         this.editGatewayStatus.message = 'Data Updated'
         this.editGatewayStatus.code = res.data.status
       } catch (err) {
         console.error(err)
         this.editGatewayLoading = false
+        this.createGatewayStatus.isError = true
         this.editGatewayStatus.message = JSON.stringify(err.response.data.data)
         this.editGatewayStatus.code = err.response.data.status
         return err

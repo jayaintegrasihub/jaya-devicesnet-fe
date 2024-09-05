@@ -21,6 +21,7 @@ export const useNodesStore = defineStore('Nodes', {
       this.getNodesLoading = true
       try {
         const res = await nodesAPI.getNodes()
+        console.log(res.data)
         this.getNodesLoading = false
         this.nodes = res.data.nodes
         this.nodes.map((item, index) => {
@@ -62,11 +63,13 @@ export const useNodesStore = defineStore('Nodes', {
         const res = await nodesAPI.deleteNode(id)
         console.log(res)
         this.deleteNodeLoading = false
+        this.status.isError = false
         this.status.message = 'Data Deleted'
         this.status.code = res.status
       } catch (err) {
         console.error(err)
         this.deleteNodeLoading = false
+        this.status.isError = true
         this.status.message = err.response.data.error
         this.status.code = err.response.data.status
         return err
@@ -78,11 +81,13 @@ export const useNodesStore = defineStore('Nodes', {
         const res = await nodesAPI.editNode(id, data)
         console.log(res)
         this.editNodeLoading = false
+        this.status.isError = false
         this.status.message = 'Data Updated'
         this.status.code = res.data.status
       } catch (err) {
         console.error(err)
         this.editNodeLoading = false
+        this.status.isError = true
         this.status.message = err.response.data.error
         this.status.code = err.response.data.status
         return err

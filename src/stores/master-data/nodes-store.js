@@ -5,6 +5,7 @@ import moment from 'moment'
 
 export const useNodesStore = defineStore('Nodes', {
   state: () => ({
+    node: ref([]),
     nodes: ref([]),
     status: ref({
       isError: null,
@@ -34,6 +35,23 @@ export const useNodesStore = defineStore('Nodes', {
       } catch (err) {
         console.error(err)
         this.getNodesLoading = false
+        this.status.message = err.response.data.error
+        this.status.code = err.response.data.status
+        return err
+      }
+    },
+    async getNode(id) {
+      this.getNodeLoading = true
+      try {
+        const res = await nodesAPI.getNode(id)
+        console.log(res.data)
+        this.getNodeLoading = false
+        this.node = res.data.node
+        console.log('node data', this.node)
+        this.status.code = res.data.status
+      } catch (err) {
+        console.error(err)
+        this.getNodeLoading = false
         this.status.message = err.response.data.error
         this.status.code = err.response.data.status
         return err

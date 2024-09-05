@@ -51,8 +51,12 @@ function convertToArray(data) {
 export const useTelemetryStore = defineStore('Telemetry', {
   state: () => ({
     isNoDevices: ref(false),
+    isNoGateways: ref(false),
+    isNoNodes: ref(false),
     lastUpdated: ref(),
     isThereOfflineDevice: ref(false),
+    isThereOfflineGateway: ref(false),
+    isThereOfflineNode: ref(false),
     offlineDevices: ref(),
     totalDevices: ref(),
     totalGateways: ref(),
@@ -66,6 +70,8 @@ export const useTelemetryStore = defineStore('Telemetry', {
     gatewaysData: ref([]),
     nodesData: ref([]),
     telemetryData: ref([]),
+    offlineNodesList: ref([]),
+    offlineGatewaysList: ref([]),
     getTelemetryDetailStatus: ref({
       isError: null,
       message: null,
@@ -140,26 +146,27 @@ export const useTelemetryStore = defineStore('Telemetry', {
         console.log(this.eventData)
         let gateways = this.eventData.statusDevices.gateways
         let onlineGatewaysList = gateways.filter((data) => data.status === 'ONLINE')
-        let offlineGatewaysList = gateways.filter((data) => data.status === 'OFFLINE')
+        this.offlineGatewaysList = gateways.filter((data) => data.status === 'OFFLINE')
         let nodes = this.eventData.statusDevices.nodes
         let onlineNodesList = nodes.filter((data) => data.status === 'ONLINE')
-        let offlineNodesList = nodes.filter((data) => data.status === 'OFFLINE')
+        this.offlineNodesList = nodes.filter((data) => data.status === 'OFFLINE')
         this.totalGateways = gateways.length
         this.totalNodes = nodes.length
         this.totalDevices = this.totalGateways + this.totalNodes
         this.onlineGateways = onlineGatewaysList.length
-        this.offlineGateways = offlineGatewaysList.length
+        this.offlineGateways = this.offlineGatewaysList.length
         this.onlineNodes = onlineNodesList.length
-        this.offlineNodes = offlineNodesList.length
+        this.offlineNodes = this.offlineNodesList.length
         this.totalOnline = this.onlineGateways + this.onlineNodes
         this.totalOffline = this.offlineGateways + this.offlineNodes
-        this.isThereOfflineDevice = offlineNodesList.length > 0
-        this.offlineDevices = offlineGatewaysList.concat(offlineNodesList)
+        this.isThereOfflineGateway = this.offlineGatewaysList.length > 0
+        this.isThereOfflineNode = this.offlineNodesList.length > 0
+        this.offlineDevices = this.offlineGatewaysList.concat(this.offlineNodesList)
         this.offlineDevices.map((data) => {
           data._time = new Date(data._time).toLocaleString()
         })
         this.lastUpdated = new Date(this.eventData.statusDevices.timeNow).toLocaleString()
-
+        console.log(this.offlineNodesList)
         this.gatewaysData = gateways
         this.gatewaysData.map((data) => {
           console.log(Math.floor((new Date() - new Date(data._time)) / 1000))
@@ -181,10 +188,15 @@ export const useTelemetryStore = defineStore('Telemetry', {
           data.rssi = Math.floor(rssiToDbm(data.rssi))
         })
 
-        if (this.totalGateways === 0 && this.totalDevices === 0) {
-          this.isNoDevices = true
+        if (this.totalGateways === 0 ) {
+          this.isNoGateways = true
         } else {
-          this.isNoDevices = false
+          this.isNoGateways = false
+        }
+        if (this.totalNodes === 0 ) {
+          this.isNoNodes = true
+        } else {
+          this.isNoNodes = false
         }
         if (this.eventData) {
           callback()

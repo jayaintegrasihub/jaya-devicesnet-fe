@@ -6,7 +6,13 @@ import moment from 'moment'
 export const useGatewaysStore = defineStore('Gateways', {
   state: () => ({
     gateways: ref([]),
+    gateway: ref({}),
     getGatewaysStatus: ref({
+      isError: null,
+      message: null,
+      code: null,
+    }),
+    getGatewayStatus: ref({
       isError: null,
       message: null,
       code: null,
@@ -29,7 +35,8 @@ export const useGatewaysStore = defineStore('Gateways', {
     deleteGatewayLoading: ref(false),
     createGatewayLoading: ref(false),
     editGatewayLoading: ref(false),
-    getGatewaysLoading: ref(false)
+    getGatewaysLoading: ref(false),
+    getGatewayLoading: ref(false)
   }),
   actions: {
     async getGateways() {
@@ -54,6 +61,26 @@ export const useGatewaysStore = defineStore('Gateways', {
         this.getGatewaysStatus.code = err.response.data.status
         this.getGatewaysStatus.message = JSON.stringify(err.response.data.data)
         this.getGatewaysStatus.isError = true
+        return err
+      }
+    },
+    async getGateway(id) {
+      this.getGatewayLoading = true
+      try {
+        const res = await gatewaysAPI.getGateway(id)
+        this.getGatewayLoading = false
+        this.gateway = res.data.gateway
+        console.log(' data', this.gateway)
+        console.log(res)
+        this.getGatewayStatus.code = res.status
+        this.getGatewayStatus.isError = false
+        this.getGatewayStatus.message = "Data Fetched"
+      } catch (err) {
+        console.error(err)
+        this.getGatewayLoading = false
+        this.getGatewayStatus.code = err.response.data.status
+        this.getGatewayStatus.message = JSON.stringify(err.response.data.data)
+        this.getGatewayStatus.isError = true
         return err
       }
     },

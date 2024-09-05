@@ -9,6 +9,9 @@ import SignalIndicator from '@/components/indicator/SignalIndicator.vue'
 import { useTenantsStore } from '@/stores/master-data/tenants-store'
 import { useLocalStorage } from '@vueuse/core'
 import { useTypesStore } from '@/stores/master-data/types-store'
+import OfflineDeviceDetail from '@/components/modal/OfflineDeviceDetail.vue'
+import { useNodesStore } from '@/stores/master-data/nodes-store'
+import { useGatewaysStore } from '@/stores/master-data/gateways-store'
 
 import { Chart, BarElement, BarController, CategoryScale, Decimation, Filler, Legend, Title, Tooltip, PointElement, LineElement, LinearScale } from 'chart.js';
 Chart.register(BarElement, BarController, CategoryScale, Decimation, Filler, Legend, Title, Tooltip, PointElement, LineElement, LinearScale)
@@ -54,7 +57,7 @@ const findByName = (array, name) => {
 
 ///telemetry
 const telemetryStore = useTelemetryStore()
-const { eventData, isNoDevices, nodesData, gatewaysData, lastUpdated, isThereOfflineDevice, offlineDevices, telemetryData, totalDevices, totalGateways, totalNodes, totalOffline, totalOnline, onlineGateways, onlineNodes, offlineGateways, offlineNodes } = storeToRefs(useTelemetryStore())
+const { eventData, isNoGateways, isNoNodes,nodesData, gatewaysData, lastUpdated, isThereOfflineGateway, isThereOfflineNode, offlineGatewaysList, offlineNodesList, telemetryData, totalDevices, totalGateways, totalNodes, totalOffline, totalOnline, onlineGateways, onlineNodes, offlineGateways, offlineNodes } = storeToRefs(useTelemetryStore())
 const groupedGatewaysData = ref({})
 const gatewaysGroupBy = useLocalStorage('GatewaysGroupBy', [])
 const groupedNodesData = ref({})
@@ -344,9 +347,30 @@ function goToDeviceDetailPage(id) {
 }
 
 
+// Offline Devices
+
+const gatewayStore = useGatewaysStore()
+const { gateway } = storeToRefs(useGatewaysStore())
+const nodesStore = useNodesStore()
+const { node } = storeToRefs(useNodesStore())
+const selectedOfflineDevice = ref('')
+const isOfflineDetailPops = ref(false)
+const offlineDeviceDetailData = ref({})
+
+async function showOfflineGatewayDetail(id) {
+  await gatewayStore.getGateway(id)
+  offlineDeviceDetailData.value = gateway.value
+  isOfflineDetailPops.value = true
+}
+async function showOfflineNodeDetail(id) {
+  await nodesStore.getNode(id)
+  offlineDeviceDetailData.value = node.value
+  isOfflineDetailPops.value = true
+}
 </script>
 
 <template>
+  <OfflineDeviceDetail :isOpen="isOfflineDetailPops" @close="isOfflineDetailPops = false" :data="offlineDeviceDetailData" :id="selectedOfflineDevice" />
   <div class="flex">
     <SideNav :isDashboardActive="true" />
     <div class="flex flex-col w-screen">
@@ -377,7 +401,7 @@ function goToDeviceDetailPage(id) {
             <p class="text-sm text-label-secondary">Last Updated: {{ lastUpdated }}</p>
           </div>
         </div>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div class="bg-bkg-secondary rounded-[24px] p-[2px] grid grid-rows-2">
             <div class="gap-[12px] flex-1 py-[12px] px-[20px] flex flex-col justify-center">
               <div class="flex justify-between">
@@ -469,44 +493,85 @@ function goToDeviceDetailPage(id) {
               </div>
             </div>
           </div>
-          <div v-if="isThereOfflineDevice && !isNoDevices"
+          <div v-if="isThereOfflineGateway && !isNoGateways"
             class="flex-1 p-[20px] bg-bkg-primary rounded-[6px] sm:rounded-[24px] shadow border border-bkg-secondary flex flex-col justify-start">
             <div class="flex flex-col gap-2">
               <div class="flex justify-between items-center">
-                <p class="text-lg text-label-primary font-semibold">Offline devices</p>
+                <p class="text-lg text-label-primary font-semibold">Offline Gateways</p>
               </div>
               <div class="flex flex-col gap-2 h-[280px] overflow-y-auto">
-                <div v-for="data in offlineDevices"
-                  class="bg-var-red rounded-[4px] px-[20px] py-[20px] text-white  flex flex-col gap-2 justify-start over">
-                  <div class="flex justify-between">
+                <div v-for="data in offlineGatewaysList" @click="showOfflineGatewayDetail(data.id)"
+                  class="cursor-pointer bg-var-red rounded-[4px] px-[20px] py-[20px] text-white  flex flex-col gap-2 justify-start over">
+                  <div class="cursor-pointer flex justify-between">
                     <!-- <p class="text-sm">{{ data.device }}</p> -->
                     <p class="text-xs">Last Heard: {{ data.lastHeard }}</p>
                   </div>
-                  <label class="text-sm font-semibold">{{ data.alias }} - {{ data.device }}</label>
+                  <label class="cursor-pointer text-sm font-semibold">{{ data.alias }} - {{ data.device }}</label>
                 </div>
               </div>
             </div>
           </div>
-          <div v-if="!isThereOfflineDevice && !isNoDevices"
+          <div v-if="!isThereOfflineGateway && !isNoGateways"
             class="flex-1 p-[20px] bg-bkg-primary rounded-[6px] sm:rounded-[24px] shadow border border-bkg-secondary flex flex-col justify-center">
             <div class="flex flex-col gap-2 h-full">
               <div
                 class="border-2 rounded-xl border-dashed border-[#36AE7C] flex justify-center items-center w-full h-full flex-col gap-2">
                 <img src="../../assets/smile-icon.svg" alt="" height="120px" width="120px">
-                <p class="text-lg text-label-primary font-semibold ">Relax, all your devices are online!</p>
+                <p class="text-sm text-label-primary font-semibold ">Relax, all your gateways are online!</p>
               </div>
             </div>
           </div>
-          <div v-if="isNoDevices"
+          <div v-if="isNoGateways"
             class="flex-1 p-[20px] bg-bkg-primary rounded-[6px] sm:rounded-[24px] shadow border border-bkg-secondary flex flex-col justify-center">
             <div class="flex flex-col gap-2 h-full">
               <div
                 class="border-2 rounded-xl border-dashed border-[#D9683C] flex justify-center items-center w-full h-full flex-col gap-2">
                 <img src="../../assets/oops-icon.svg" alt="" height="120px" width="120px">
-                <p class="text-lg text-label-primary font-semibold ">Ooops, seems like you don't have any device yet</p>
+                <p class="text-sm text-label-primary font-semibold ">Ooops, seems like you don't have any gateways yet
+                </p>
               </div>
             </div>
           </div>
+          <!-- nodes -->
+          <div v-if="isThereOfflineNode && !isNoNodes"
+            class="flex-1 p-[20px] bg-bkg-primary rounded-[6px] sm:rounded-[24px] shadow border border-bkg-secondary flex flex-col justify-start">
+            <div class="flex flex-col gap-2">
+              <div class="flex justify-between items-center">
+                <p class="text-lg text-label-primary font-semibold">Offline Nodes</p>
+              </div>
+              <div class="flex flex-col gap-2 h-[280px] overflow-y-auto">
+                <div v-for="data in offlineNodesList" @click="showOfflineNodeDetail((data.id))"
+                  class="cursor-pointer bg-var-red rounded-[4px] px-[20px] py-[20px] text-white  flex flex-col gap-2 justify-start over">
+                  <div class="flex justify-between cursor-pointer">
+                    <!-- <p class="text-sm">{{ data.device }}</p> -->
+                    <p class="text-xs cursor-pointer">Last Heard: {{ data.lastHeard }}</p>
+                  </div>
+                  <label class="text-sm font-semibold cursor-pointer">{{ data.alias }} - {{ data.device }}</label>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-if="!isThereOfflineNode && !isNoNodes"
+            class="flex-1 p-[20px] bg-bkg-primary rounded-[6px] sm:rounded-[24px] shadow border border-bkg-secondary flex flex-col justify-center">
+            <div class="flex flex-col gap-2 h-full">
+              <div
+                class="border-2 rounded-xl border-dashed border-[#36AE7C] flex justify-center items-center w-full h-full flex-col gap-2">
+                <img src="../../assets/smile-icon.svg" alt="" height="120px" width="120px">
+                <p class="text-sm text-label-primary font-semibold ">Relax, all your nodes are online!</p>
+              </div>
+            </div>
+          </div>
+          <div v-if="isNoNodes"
+            class="flex-1 p-[20px] bg-bkg-primary rounded-[6px] sm:rounded-[24px] shadow border border-bkg-secondary flex flex-col justify-center">
+            <div class="flex flex-col gap-2 h-full">
+              <div
+                class="border-2 rounded-xl border-dashed border-[#D9683C] flex justify-center items-center w-full h-full flex-col gap-2">
+                <img src="../../assets/oops-icon.svg" alt="" height="120px" width="120px">
+                <p class="text-sm text-label-primary font-semibold ">Ooops, seems like you don't have any nodes yet</p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 

@@ -57,7 +57,7 @@ const findByName = (array, name) => {
 
 ///telemetry
 const telemetryStore = useTelemetryStore()
-const { eventData, isNoGateways, isNoNodes,nodesData, gatewaysData, lastUpdated, isThereOfflineGateway, isThereOfflineNode, offlineGatewaysList, offlineNodesList, telemetryData, totalDevices, totalGateways, totalNodes, totalOffline, totalOnline, onlineGateways, onlineNodes, offlineGateways, offlineNodes } = storeToRefs(useTelemetryStore())
+const { eventData, isNoGateways, isNoNodes, nodesData, gatewaysData, lastUpdated, isThereOfflineGateway, isThereOfflineNode, offlineGatewaysList, offlineNodesList, telemetryData, totalDevices, totalGateways, totalNodes, totalOffline, totalOnline, onlineGateways, onlineNodes, offlineGateways, offlineNodes } = storeToRefs(useTelemetryStore())
 const groupedGatewaysData = ref({})
 const gatewaysGroupBy = useLocalStorage('GatewaysGroupBy', [])
 const groupedNodesData = ref({})
@@ -194,6 +194,56 @@ function groupBy(conversions, property) {
 //------------
 
 ///utils
+
+const tabs = [
+  {
+    title: 'Card',
+    value: 'card',
+  },
+  {
+    title: 'Table',
+    value: 'table',
+  }
+]
+const selectedNodesView = useLocalStorage('selectedNodesView', 'card')
+const selectedGatewaysView = useLocalStorage('selectedGatewaysView', 'card')
+
+function changeGatewayView(navigation) {
+  var subNavs = document.getElementsByClassName("gateway-tab")
+  console.log(subNavs)
+  for (var i of subNavs) {
+    i.classList.remove("active");
+  }
+  console.log(navigation)
+  event.target.className += " active"
+  selectedGatewaysView.value = navigation
+}
+
+function changeNodeView(navigation) {
+  var subNavs = document.getElementsByClassName("node-tab")
+  console.log(subNavs)
+  for (var i of subNavs) {
+    i.classList.remove("active");
+  }
+  console.log(navigation)
+  event.target.className += " active"
+  selectedNodesView.value = navigation
+}
+
+const nodeHeader = [
+  { text: "", value: "status", sortable: true, width: 30 },
+  { text: "Serial Number", value: "device", sortable: true },
+  { text: "Alias", value: "alias", sortable: true },
+  { text: "Last Heard", value: "_time", sortable: true },
+  { text: "Uptime", value: "uptime", sortable: true },
+  { text: "Humidity (%)", value: "humidity", sortable: true },
+  { text: "Temperature (C)", value: "temperature", sortable: true },
+  { text: "Radio dBm", value: "rssi", sortable: true },
+  { text: "Fw. Version", value: "fwVersion", sortable: true },
+  { text: "Hw. Version", value: "hwVersion", sortable: true },
+  { text: "", value: "operation", width: 50 },
+]
+
 const { isDark } = storeToRefs(useThemeStore())
 const delay = (time) => new Promise((resolve) => setTimeout(resolve, time))
 const whileState = ref(true)
@@ -370,7 +420,8 @@ async function showOfflineNodeDetail(id) {
 </script>
 
 <template>
-  <OfflineDeviceDetail :isOpen="isOfflineDetailPops" @close="isOfflineDetailPops = false" :data="offlineDeviceDetailData" :id="selectedOfflineDevice" />
+  <OfflineDeviceDetail :isOpen="isOfflineDetailPops" @close="isOfflineDetailPops = false"
+    :data="offlineDeviceDetailData" :id="selectedOfflineDevice" />
   <div class="flex">
     <SideNav :isDashboardActive="true" />
     <div class="flex flex-col w-screen">
@@ -584,119 +635,54 @@ async function showOfflineNodeDetail(id) {
           <div class="mx-8 grid grid-row gap-4 md:gap-8">
             <div class="flex flex-col gap-10">
               <div class="flex flex-col gap-4">
-                <div
-                  class="flex justify-between items-center border border-bkg-tertiary border-opacity-60 rounded-[8px] px-6 py-2 shadow-md gap-2 font-semibold bg-bkg-secondary text-label-primary">
-                  <p>
-                    Gateways
-                  </p>
-                  <div class="flex items-center gap-3" v-if="selectedDeviceType !== 'All'">
-                    <h1 class="text-label-primary text-sm font-medium">Group By</h1>
-                    <div class="flex gap-1">
-                      <div @click="removeGatewaysGroup(group)"
-                        class="bg-[#E2EBF6] border text-[#3962EB] px-2 py-1 rounded-full cursor-pointer text-xs font-sembold"
-                        v-for="group in gatewaysGroupBy">
-                        {{ group }}
-                      </div>
-                    </div>
-                    <div class="dropdown">
-                      <div class="p-2 rounded-lg cursor-pointer bg-bkg-tertiary">
-                        <img src="../../assets/group-icon.svg" alt="" height="16px" width="16px">
-                      </div>
-                      <div class="dropdown-content">
-                        <div v-for="(option, index) in type.groups" :key="index" class="">
-                          <label class="cursor-pointer select-none">
-                            <input class="cursor-pointer sr-only peer" type="checkbox" id="" :value="option"
-                              v-model="gatewaysGroupBy"
-                              :disabled="gatewaysGroupBy.length >= 2 && !gatewaysGroupBy.includes(option)">
-                            <div
-                              class="font-normal peer-checked:text-[#3962EB] text-sm rounded-lg w-full h-6 bg-gray-200 peer peer-checked:bg-[#E2EBF6]">
-                              <p class="h-full flex items-center justify-center ">{{ option }}</p>
-                            </div>
-                          </label>
+                <div class="flex gap-4 w-full">
+                  <div
+                    class="w-full flex justify-between items-center border border-bkg-tertiary border-opacity-60 rounded-[8px] px-6 py-2 gap-2 font-semibold bg-bkg-secondary text-label-primary">
+                    <p>
+                      Gateways
+                    </p>
+                    <div class="flex items-center gap-3" v-if="selectedDeviceType !== 'All'">
+                      <h1 class="text-label-primary text-sm font-medium">Group By</h1>
+                      <div class="flex gap-1">
+                        <div @click="removeGatewaysGroup(group)"
+                          class="bg-[#E2EBF6] border text-[#3962EB] px-2 py-1 rounded-full cursor-pointer text-xs font-sembold"
+                          v-for="group in gatewaysGroupBy">
+                          {{ group }}
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div v-if="gatewaysGroupBy.length === 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px] pb-2">
-                  <div @click.left="goToDeviceDetailPage(data.device)"
-                    class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit "
-                    v-for="data in gatewaysData">
-                    <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
-                      <div class="flex justify-between items-center">
-                        <div class="flex gap-5 items-center">
-                          <BaseIndicator :status="data.status" />
-                          <h1 class="font-medium text-base sm:text-lg text-label-primary">
-                            {{ data.alias }}
-                          </h1>
+                      <div class="dropdown">
+                        <div class="p-2 rounded-lg cursor-pointer bg-bkg-tertiary">
+                          <img src="../../assets/group-icon.svg" alt="" height="16px" width="16px">
                         </div>
-                        <div>
-                          <SignalIndicator :status=data.rssi />
-                        </div>
-                      </div>
-                      <div class="grid grid-cols-1 xl:grid-cols-2 justify-between">
-                        <div class="flex flex-col gap-1">
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="font-medium text-label-primary opacity-80">SN:</p>
-                            <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
-                            <div class="flex flex-col gap-1">
-                              <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
-                              <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
-                            </div>
-                            <div class="dropdown">
-                              <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
-                                class="cursor-pointer">
-                              <div class="dropdown-content w-full">
-                                {{ data.lastHeard }} ago
+                        <div class="dropdown-content">
+                          <div v-for="(option, index) in type.groups" :key="index" class="">
+                            <label class="cursor-pointer select-none">
+                              <input class="cursor-pointer sr-only peer" type="checkbox" id="" :value="option"
+                                v-model="gatewaysGroupBy"
+                                :disabled="gatewaysGroupBy.length >= 2 && !gatewaysGroupBy.includes(option)">
+                              <div
+                                class="font-normal peer-checked:text-[#3962EB] text-sm rounded-lg w-full h-6 bg-gray-200 peer peer-checked:bg-[#E2EBF6]">
+                                <p class="h-full flex items-center justify-center ">{{ option }}</p>
                               </div>
-                            </div>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Humidity:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.humidity }}%</p>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Temperature:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.temperature }}°C</p>
-                          </div>
-                        </div>
-                        <div class="flex flex-col gap-1">
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Fw Version:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.fwVersion }}</p>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Hw Version:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.hwVersion }}</p>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Lora dBm:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.rssi }}</p>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Uptime:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.uptime }}</p>
+                            </label>
                           </div>
                         </div>
                       </div>
-                    </a>
+                    </div>
+                  </div>
+                  <div class="tab">
+                    <button v-for="(tab, index) in tabs" :key="tab.value" @click="changeGatewayView(tab.value)"
+                      class="gateway-tab outline-none" :value="index" :id="tab.value"
+                      :class="selectedGatewaysView === tab.value ? 'active' : ''">{{ tab.title }}
+                    </button>
                   </div>
                 </div>
-
-                <div v-if="gatewaysGroupBy.length == 1" v-for="( value, key ) in groupedGatewaysData"
-                  class="flex flex-col gap-4">
-                  <div class="px-6 py-2 bg-bkg-secondary rounded-[8px]">
-                    <h1 class="text-label-primary font-semibold">
-                      {{ gatewaysGroupBy[0] }} {{ key }}
-                    </h1>
-                  </div>
-                  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px] pb-2">
-                    <div @click="goToDeviceDetailPage(data.device)"
+                <div :class="selectedGatewaysView === 'card' ? '' : 'hidden'">
+                  <div v-if="gatewaysGroupBy.length === 0"
+                    class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px]-[200px] pb-2">
+                    <div @click.left="goToDeviceDetailPage(data.device)"
                       class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit "
-                      v-for="data in value">
+                      v-for="data in gatewaysData">
                       <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
                         <div class="flex justify-between items-center">
                           <div class="flex gap-5 items-center">
@@ -759,207 +745,232 @@ async function showOfflineNodeDetail(id) {
                       </a>
                     </div>
                   </div>
-                </div>
 
-                <div v-if="gatewaysGroupBy.length > 1" class="flex flex-col gap-4">
-                  <div v-for="(outerGroup, outerKey) in groupedGatewaysData" :key="outerKey"
-                    class="rounded-[16px] bg-bkg-secondary p-[10px] flex flex-col gap-4">
-                    <div class="p-[6px]">
-                      <h1 class="text-label-primary font-semibold text-normal">
-                        {{ gatewaysGroupBy[0] }} {{ outerKey }}
+                  <div v-if="gatewaysGroupBy.length == 1" v-for="( value, key ) in groupedGatewaysData"
+                    class="flex flex-col gap-4">
+                    <div class="px-6 py-2 bg-bkg-secondary rounded-[8px]">
+                      <h1 class="text-label-primary font-semibold">
+                        {{ gatewaysGroupBy[0] }} {{ key }}
                       </h1>
                     </div>
-                    <div v-for="(innerGroup, innerKey) in outerGroup" :key="innerKey"
-                      class="bg-bkg-primary p-[10px] rounded-[11px] border border-bkg-tertiary">
-                      <div class="p-[6px]">
-                        <h2 class="text-label-primary font-medium text-normal">
-                          {{ gatewaysGroupBy[1] }} {{ innerKey }}
-                        </h2>
-                      </div>
-                      <div class="grid grid-cols-3">
-                        <div v-for="data in innerGroup" :key="data.device" @click="goToDeviceDetailPage(data.device)"
-                          class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit ">
-                          <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
-
-                            <div class="flex justify-between items-center">
-                              <div class="flex gap-5 items-center">
-                                <BaseIndicator :status="data.status" />
-                                <h1 class="font-medium text-base sm:text-lg text-label-primary">
-                                  {{ data.alias }}
-                                </h1>
+                    <div
+                      class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px]-[200px] pb-2">
+                      <div @click="goToDeviceDetailPage(data.device)"
+                        class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit "
+                        v-for="data in value">
+                        <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
+                          <div class="flex justify-between items-center">
+                            <div class="flex gap-5 items-center">
+                              <BaseIndicator :status="data.status" />
+                              <h1 class="font-medium text-base sm:text-lg text-label-primary">
+                                {{ data.alias }}
+                              </h1>
+                            </div>
+                            <div>
+                              <SignalIndicator :status=data.rssi />
+                            </div>
+                          </div>
+                          <div class="grid grid-cols-1 xl:grid-cols-2 justify-between">
+                            <div class="flex flex-col gap-1">
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="font-medium text-label-primary opacity-80">SN:</p>
+                                <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
                               </div>
-                              <div>
-                                <SignalIndicator :status="data.rssi" />
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
+                                <div class="flex flex-col gap-1">
+                                  <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
+                                  <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                                </div>
+                                <div class="dropdown">
+                                  <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
+                                    class="cursor-pointer">
+                                  <div class="dropdown-content w-full">
+                                    {{ data.lastHeard }} ago
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Humidity:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.humidity }}%</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Temperature:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.temperature }}°C</p>
                               </div>
                             </div>
-                            <div class="grid grid-cols-1 xl:grid-cols-2 justify-between">
-                              <div class="flex flex-col gap-1">
-                                <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                                  <p class="font-medium text-label-primary opacity-80">SN:</p>
-                                  <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
+                            <div class="flex flex-col gap-1">
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Fw Version:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.fwVersion }}</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Hw Version:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.hwVersion }}</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Lora dBm:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.rssi }}</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Uptime:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.uptime }}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div v-if="gatewaysGroupBy.length > 1" class="flex flex-col gap-4">
+                    <div v-for="(outerGroup, outerKey) in groupedGatewaysData" :key="outerKey"
+                      class="rounded-[16px] bg-bkg-secondary p-[10px] flex flex-col gap-4 max-h-[800px] min-h-[200px] overflow-y-scroll overflow-x-visible">
+                      <div class="p-[6px]">
+                        <h1 class="text-label-primary font-semibold text-normal">
+                          {{ gatewaysGroupBy[0] }} {{ outerKey }}
+                        </h1>
+                      </div>
+                      <div v-for="(innerGroup, innerKey) in outerGroup" :key="innerKey"
+                        class="bg-bkg-primary p-[10px] rounded-[11px] border border-bkg-tertiary">
+                        <div class="p-[6px]">
+                          <h2 class="text-label-primary font-medium text-normal">
+                            {{ gatewaysGroupBy[1] }} {{ innerKey }}
+                          </h2>
+                        </div>
+                        <div class="grid grid-cols-3">
+                          <div v-for="data in innerGroup" :key="data.device" @click="goToDeviceDetailPage(data.device)"
+                            class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit ">
+                            <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
+
+                              <div class="flex justify-between items-center">
+                                <div class="flex gap-5 items-center">
+                                  <BaseIndicator :status="data.status" />
+                                  <h1 class="font-medium text-base sm:text-lg text-label-primary">
+                                    {{ data.alias }}
+                                  </h1>
                                 </div>
-                                <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
-                                  <div class="flex flex-col gap-1">
-                                    <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
-                                    <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                                <div>
+                                  <SignalIndicator :status="data.rssi" />
+                                </div>
+                              </div>
+                              <div class="grid grid-cols-1 xl:grid-cols-2 justify-between">
+                                <div class="flex flex-col gap-1">
+                                  <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                    <p class="font-medium text-label-primary opacity-80">SN:</p>
+                                    <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
                                   </div>
-                                  <div class="dropdown">
-                                    <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
-                                      class="cursor-pointer">
-                                    <div class="dropdown-content w-full">
-                                      {{ data.lastHeard }} ago
+                                  <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
+                                    <div class="flex flex-col gap-1">
+                                      <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
+                                      <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                                    </div>
+                                    <div class="dropdown">
+                                      <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
+                                        class="cursor-pointer">
+                                      <div class="dropdown-content w-full">
+                                        {{ data.lastHeard }} ago
+                                      </div>
                                     </div>
                                   </div>
+                                  <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                    <p class="text-label-primary font-medium opacity-80">Humidity:</p>
+                                    <p class="text-label-primary font-semibold opacity-90">{{ data.humidity }}%</p>
+                                  </div>
+                                  <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                    <p class="text-label-primary font-medium opacity-80">Temperature:</p>
+                                    <p class="text-label-primary font-semibold opacity-90">{{ data.temperature }}°C</p>
+                                  </div>
                                 </div>
-                                <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                                  <p class="text-label-primary font-medium opacity-80">Humidity:</p>
-                                  <p class="text-label-primary font-semibold opacity-90">{{ data.humidity }}%</p>
-                                </div>
-                                <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                                  <p class="text-label-primary font-medium opacity-80">Temperature:</p>
-                                  <p class="text-label-primary font-semibold opacity-90">{{ data.temperature }}°C</p>
+                                <div class="flex flex-col gap-1">
+                                  <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                    <p class="text-label-primary font-medium opacity-80">Fw Version:</p>
+                                    <p class="text-label-primary font-semibold opacity-90">{{ data.fwVersion }}</p>
+                                  </div>
+                                  <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                    <p class="text-label-primary font-medium opacity-80">Hw Version:</p>
+                                    <p class="text-label-primary font-semibold opacity-90">{{ data.hwVersion }}</p>
+                                  </div>
+                                  <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                    <p class="text-label-primary font-medium opacity-80">Lora dBm:</p>
+                                    <p class="text-label-primary font-semibold opacity-90">{{ data.rssi }}</p>
+                                  </div>
+                                  <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                    <p class="text-label-primary font-medium opacity-80">Uptime:</p>
+                                    <p class="text-label-primary font-semibold opacity-90">{{ data.uptime }}</p>
+                                  </div>
                                 </div>
                               </div>
-                              <div class="flex flex-col gap-1">
-                                <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                                  <p class="text-label-primary font-medium opacity-80">Fw Version:</p>
-                                  <p class="text-label-primary font-semibold opacity-90">{{ data.fwVersion }}</p>
-                                </div>
-                                <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                                  <p class="text-label-primary font-medium opacity-80">Hw Version:</p>
-                                  <p class="text-label-primary font-semibold opacity-90">{{ data.hwVersion }}</p>
-                                </div>
-                                <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                                  <p class="text-label-primary font-medium opacity-80">Lora dBm:</p>
-                                  <p class="text-label-primary font-semibold opacity-90">{{ data.rssi }}</p>
-                                </div>
-                                <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                                  <p class="text-label-primary font-medium opacity-80">Uptime:</p>
-                                  <p class="text-label-primary font-semibold opacity-90">{{ data.uptime }}</p>
-                                </div>
-                              </div>
-                            </div>
-                          </a>
+                            </a>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-
+                <div :class="selectedGatewaysView === 'table' ? '' : 'hidden'" class="flex flex-col gap-4">
+                  <div class="w-fit">
+                    <SearchBar class="outlined" v-model="searchValue" placeholder="Search by SN, alias ..." />
+                  </div>
+                  <EasyDataTable fixed-expand :rows-per-page="25" table-class-name="customize-table"
+                    :headers="nodeHeader" :items="gatewaysData" theme-color="#1363df" :search-value="searchValue"
+                    sort-by="status">
+                    <template #item-status="item">
+                      <div class="w-full flex justify-center">
+                        <BaseIndicator :status="item.status" />
+                      </div>
+                    </template>
+                  </EasyDataTable>
+                </div>
               </div>
               <div class="flex flex-col gap-4">
-                <div
-                  class="flex justify-between items-center border border-bkg-tertiary border-opacity-60 rounded-[8px] px-6 py-2 shadow-md gap-2 font-semibold bg-bkg-secondary text-label-primary">
-                  <p>
-                    Nodes
-                  </p>
-                  <div class="flex items-center gap-3" v-if="selectedDeviceType !== 'All'">
-                    <h1 class="text-label-primary text-sm font-medium">Group By</h1>
-                    <div class="flex gap-1">
-                      <div @click="removeNodesGroup(group)"
-                        class="bg-[#E2EBF6] border text-[#3962EB] px-2 py-1 rounded-full cursor-pointer text-xs font-sembold"
-                        v-for="group in nodesGroupBy">
-                        {{ group }}
-                      </div>
-                    </div>
-                    <div class="dropdown">
-                      <div class="p-2 rounded-lg cursor-pointer bg-bkg-tertiary">
-                        <img src="../../assets/group-icon.svg" alt="" height="16px" width="16px">
-                      </div>
-                      <div class="dropdown-content">
-                        <div v-for="(option, index) in type.groups" :key="index" class="">
-                          <label class="cursor-pointer select-none">
-                            <input class="cursor-pointer sr-only peer" type="checkbox" id="" :value="option"
-                              v-model="nodesGroupBy"
-                              :disabled="nodesGroupBy.length >= 2 && !nodesGroupBy.includes(option)">
-                            <div
-                              class="font-normal peer-checked:text-[#3962EB] text-sm rounded-lg w-full h-6 bg-gray-200 peer peer-checked:bg-[#E2EBF6]">
-                              <p class="h-full flex items-center justify-center ">{{ option }}</p>
-                            </div>
-                          </label>
+                <div class="flex gap-4 w-full">
+                  <div
+                    class="w-full flex justify-between items-center border border-bkg-tertiary border-opacity-60 rounded-[8px] px-6 py-2 gap-2 font-semibold bg-bkg-secondary text-label-primary">
+                    <p>
+                      Nodes
+                    </p>
+                    <div class="flex items-center gap-3" v-if="selectedDeviceType !== 'All'">
+                      <h1 class="text-label-primary text-sm font-medium">Group By</h1>
+                      <div class="flex gap-1">
+                        <div @click="removeNodesGroup(group)"
+                          class="bg-[#E2EBF6] border text-[#3962EB] px-2 py-1 rounded-full cursor-pointer text-xs font-sembold"
+                          v-for="group in nodesGroupBy">
+                          {{ group }}
                         </div>
                       </div>
-                    </div>
-                  </div>
-                </div>
-                <div v-if="nodesGroupBy.length === 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px] pb-2">
-                  <div @click="goToDeviceDetailPage(data.device)"
-                    class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit "
-                    v-for="data in nodesData">
-                    <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
-                      <div class="flex justify-between items-center">
-                        <div class="flex gap-5 items-center">
-                          <BaseIndicator :status="data.status" />
-                          <h1 class="font-medium text-base sm:text-lg text-label-primary">
-                            {{ data.alias }}
-                          </h1>
+                      <div class="dropdown">
+                        <div class="p-2 rounded-lg cursor-pointer bg-bkg-tertiary">
+                          <img src="../../assets/group-icon.svg" alt="" height="16px" width="16px">
                         </div>
-                        <div>
-                          <SignalIndicator :status=data.rssi />
-                        </div>
-                      </div>
-                      <div class="grid grid-cols-1 xl:grid-cols-2 justify-between">
-                        <div class="flex flex-col gap-1">
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="font-medium text-label-primary opacity-80">SN:</p>
-                            <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
-                            <div class="flex flex-col gap-1">
-                              <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
-                              <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
-                            </div>
-                            <div class="dropdown">
-                              <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
-                                class="cursor-pointer">
-                              <div class="dropdown-content w-full">
-                                {{ data.lastHeard }} ago
+                        <div class="dropdown-content">
+                          <div v-for="(option, index) in type.groups" :key="index" class="">
+                            <label class="cursor-pointer select-none">
+                              <input class="cursor-pointer sr-only peer" type="checkbox" id="" :value="option"
+                                v-model="nodesGroupBy"
+                                :disabled="nodesGroupBy.length >= 2 && !nodesGroupBy.includes(option)">
+                              <div
+                                class="font-normal peer-checked:text-[#3962EB] text-sm rounded-lg w-full h-6 bg-gray-200 peer peer-checked:bg-[#E2EBF6]">
+                                <p class="h-full flex items-center justify-center ">{{ option }}</p>
                               </div>
-                            </div>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Humidity:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.humidity }}%</p>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Temperature:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.temperature }}°C</p>
-                          </div>
-                        </div>
-                        <div class="flex flex-col gap-1">
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Fw Version:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.fwVersion }}</p>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Hw Version:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.hwVersion }}</p>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Lora dBm:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.rssi }}</p>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Uptime:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.uptime }}</p>
+                            </label>
                           </div>
                         </div>
                       </div>
-                    </a>
+                    </div>
+                  </div>
+                  <div class="tab">
+                    <button v-for="(tab, index) in tabs" :key="tab.value" @click="changeNodeView(tab.value)"
+                      class="node-tab outline-none" :value="index" :id="tab.value"
+                      :class="selectedNodesView === tab.value ? 'active' : ''">{{ tab.title }}
+                    </button>
                   </div>
                 </div>
-
-                <div v-if="nodesGroupBy.length == 1" v-for="( value, key ) in groupedNodesData"
-                  class="flex flex-col gap-4">
-                  <div class="px-6 py-2 bg-bkg-secondary rounded-[8px]">
-                    <h1 class="text-label-primary font-semibold">
-                      {{ nodesGroupBy[0] }} {{ key }}
-                    </h1>
-                  </div>
-                  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px] pb-2">
+                <div :class="selectedNodesView === 'card' ? '' : 'hidden'">
+                  <div v-if="nodesGroupBy.length === 0"
+                    class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px]-[200px] pb-2">
                     <div @click="goToDeviceDetailPage(data.device)"
                       class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit "
-                      v-for="data in value">
+                      v-for="data in nodesData">
                       <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
                         <div class="flex justify-between items-center">
                           <div class="flex gap-5 items-center">
@@ -1022,91 +1033,181 @@ async function showOfflineNodeDetail(id) {
                       </a>
                     </div>
                   </div>
-                </div>
 
-                <div v-if="nodesGroupBy.length > 1" class="flex flex-col gap-4">
-                  <div v-for="(outerGroup, outerKey) in groupedNodesData" :key="outerKey"
-                    class="rounded-[16px] bg-bkg-secondary p-[10px] flex flex-col gap-4">
-                    <div class="p-[6px]">
-                      <h1 class="text-label-primary font-semibold text-normal">
-                        {{ nodesGroupBy[0] }} {{ outerKey }}
+                  <div v-if="nodesGroupBy.length == 1" v-for="( value, key ) in groupedNodesData"
+                    class="flex flex-col gap-4">
+                    <div class="px-6 py-2 bg-bkg-secondary rounded-[8px]">
+                      <h1 class="text-label-primary font-semibold">
+                        {{ nodesGroupBy[0] }} {{ key }}
                       </h1>
                     </div>
-                    <div v-for="(innerGroup, innerKey) in outerGroup" :key="innerKey"
-                      class="bg-bkg-primary p-[10px] rounded-[11px] border border-bkg-tertiary">
-                      <div class="p-[6px]">
-                        <h2 class="text-label-primary font-medium text-normal">
-                          {{ nodesGroupBy[1] }} {{ innerKey }}
-                        </h2>
-                      </div>
-                      <div class="grid grid-cols-3">
-                        <div v-for="data in innerGroup" :key="data.device" @click="goToDeviceDetailPage(data.device)"
-                          class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit ">
-                          <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
-
-                            <div class="flex justify-between items-center">
-                              <div class="flex gap-5 items-center">
-                                <BaseIndicator :status="data.status" />
-                                <h1 class="font-medium text-base sm:text-lg text-label-primary">
-                                  {{ data.alias }}
-                                </h1>
+                    <div
+                      class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px]-[200px] pb-2">
+                      <div @click="goToDeviceDetailPage(data.device)"
+                        class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit "
+                        v-for="data in value">
+                        <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
+                          <div class="flex justify-between items-center">
+                            <div class="flex gap-5 items-center">
+                              <BaseIndicator :status="data.status" />
+                              <h1 class="font-medium text-base sm:text-lg text-label-primary">
+                                {{ data.alias }}
+                              </h1>
+                            </div>
+                            <div>
+                              <SignalIndicator :status=data.rssi />
+                            </div>
+                          </div>
+                          <div class="grid grid-cols-1 xl:grid-cols-2 justify-between">
+                            <div class="flex flex-col gap-1">
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="font-medium text-label-primary opacity-80">SN:</p>
+                                <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
                               </div>
-                              <div>
-                                <SignalIndicator :status="data.rssi" />
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
+                                <div class="flex flex-col gap-1">
+                                  <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
+                                  <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                                </div>
+                                <div class="dropdown">
+                                  <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
+                                    class="cursor-pointer">
+                                  <div class="dropdown-content w-full">
+                                    {{ data.lastHeard }} ago
+                                  </div>
+                                </div>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Humidity:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.humidity }}%</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Temperature:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.temperature }}°C</p>
                               </div>
                             </div>
-                            <div class="grid grid-cols-1 xl:grid-cols-2 justify-between">
-                              <div class="flex flex-col gap-1">
-                                <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                                  <p class="font-medium text-label-primary opacity-80">SN:</p>
-                                  <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
+                            <div class="flex flex-col gap-1">
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Fw Version:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.fwVersion }}</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Hw Version:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.hwVersion }}</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Lora dBm:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.rssi }}</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="text-label-primary font-medium opacity-80">Uptime:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data.uptime }}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div v-if="nodesGroupBy.length > 1" class="flex flex-col gap-4">
+                    <div v-for="(outerGroup, outerKey) in groupedNodesData" :key="outerKey"
+                      class="rounded-[16px] bg-bkg-secondary p-[10px] flex flex-col gap-4 max-h-[800px] min-h-[200px] overflow-y-scroll overflow-x-visible">
+                      <div class="p-[6px]">
+                        <h1 class="text-label-primary font-semibold text-normal">
+                          {{ nodesGroupBy[0] }} {{ outerKey }}
+                        </h1>
+                      </div>
+                      <div v-for="(innerGroup, innerKey) in outerGroup" :key="innerKey"
+                        class="bg-bkg-primary p-[10px] rounded-[11px] border border-bkg-tertiary">
+                        <div class="p-[6px]">
+                          <h2 class="text-label-primary font-medium text-normal">
+                            {{ nodesGroupBy[1] }} {{ innerKey }}
+                          </h2>
+                        </div>
+                        <div class="grid grid-cols-3">
+                          <div v-for="data in innerGroup" :key="data.device" @click="goToDeviceDetailPage(data.device)"
+                            class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit ">
+                            <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
+
+                              <div class="flex justify-between items-center">
+                                <div class="flex gap-5 items-center">
+                                  <BaseIndicator :status="data.status" />
+                                  <h1 class="font-medium text-base sm:text-lg text-label-primary">
+                                    {{ data.alias }}
+                                  </h1>
                                 </div>
-                                <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
-                                  <div class="flex flex-col gap-1">
-                                    <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
-                                    <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                                <div>
+                                  <SignalIndicator :status="data.rssi" />
+                                </div>
+                              </div>
+                              <div class="grid grid-cols-1 xl:grid-cols-2 justify-between">
+                                <div class="flex flex-col gap-1">
+                                  <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                    <p class="font-medium text-label-primary opacity-80">SN:</p>
+                                    <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
                                   </div>
-                                  <div class="dropdown">
-                                    <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
-                                      class="cursor-pointer">
-                                    <div class="dropdown-content w-full">
-                                      {{ data.lastHeard }} ago
+                                  <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
+                                    <div class="flex flex-col gap-1">
+                                      <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
+                                      <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                                    </div>
+                                    <div class="dropdown">
+                                      <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
+                                        class="cursor-pointer">
+                                      <div class="dropdown-content w-full">
+                                        {{ data.lastHeard }} ago
+                                      </div>
                                     </div>
                                   </div>
+                                  <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                    <p class="text-label-primary font-medium opacity-80">Humidity:</p>
+                                    <p class="text-label-primary font-semibold opacity-90">{{ data.humidity }}%</p>
+                                  </div>
+                                  <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                    <p class="text-label-primary font-medium opacity-80">Temperature:</p>
+                                    <p class="text-label-primary font-semibold opacity-90">{{ data.temperature }}°C</p>
+                                  </div>
                                 </div>
-                                <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                                  <p class="text-label-primary font-medium opacity-80">Humidity:</p>
-                                  <p class="text-label-primary font-semibold opacity-90">{{ data.humidity }}%</p>
-                                </div>
-                                <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                                  <p class="text-label-primary font-medium opacity-80">Temperature:</p>
-                                  <p class="text-label-primary font-semibold opacity-90">{{ data.temperature }}°C</p>
+                                <div class="flex flex-col gap-1">
+                                  <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                    <p class="text-label-primary font-medium opacity-80">Fw Version:</p>
+                                    <p class="text-label-primary font-semibold opacity-90">{{ data.fwVersion }}</p>
+                                  </div>
+                                  <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                    <p class="text-label-primary font-medium opacity-80">Hw Version:</p>
+                                    <p class="text-label-primary font-semibold opacity-90">{{ data.hwVersion }}</p>
+                                  </div>
+                                  <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                    <p class="text-label-primary font-medium opacity-80">Lora dBm:</p>
+                                    <p class="text-label-primary font-semibold opacity-90">{{ data.rssi }}</p>
+                                  </div>
+                                  <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                    <p class="text-label-primary font-medium opacity-80">Uptime:</p>
+                                    <p class="text-label-primary font-semibold opacity-90">{{ data.uptime }}</p>
+                                  </div>
                                 </div>
                               </div>
-                              <div class="flex flex-col gap-1">
-                                <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                                  <p class="text-label-primary font-medium opacity-80">Fw Version:</p>
-                                  <p class="text-label-primary font-semibold opacity-90">{{ data.fwVersion }}</p>
-                                </div>
-                                <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                                  <p class="text-label-primary font-medium opacity-80">Hw Version:</p>
-                                  <p class="text-label-primary font-semibold opacity-90">{{ data.hwVersion }}</p>
-                                </div>
-                                <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                                  <p class="text-label-primary font-medium opacity-80">Lora dBm:</p>
-                                  <p class="text-label-primary font-semibold opacity-90">{{ data.rssi }}</p>
-                                </div>
-                                <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                                  <p class="text-label-primary font-medium opacity-80">Uptime:</p>
-                                  <p class="text-label-primary font-semibold opacity-90">{{ data.uptime }}</p>
-                                </div>
-                              </div>
-                            </div>
-                          </a>
+                            </a>
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
+                </div>
+                <div :class="selectedNodesView === 'table' ? '' : 'hidden'" class="flex flex-col gap-4">
+                  <div class="w-fit">
+                    <SearchBar class="outlined" v-model="searchValue" placeholder="Search by SN, alias ..." />
+                  </div>
+                  <EasyDataTable fixed-expand :rows-per-page="25" table-class-name="customize-table"
+                    :headers="nodeHeader" :items="nodesData" theme-color="#1363df" :search-value="searchValue"
+                    sort-by="status">
+                    <template #item-status="item">
+                      <div class="w-full flex justify-center">
+                        <BaseIndicator :status="item.status" />
+                      </div>
+                    </template>
+                  </EasyDataTable>
                 </div>
               </div>
             </div>
@@ -1227,11 +1328,11 @@ p {
 }
 
 .dropdown-content {
-  @apply opacity-0 flex flex-col gap-1 invisible absolute right-0 bg-bkg-secondary rounded-lg z-10 border min-w-[180px] shadow-lg transition-opacity ease-in-out delay-100 duration-300 p-4
+  @apply opacity-0 flex flex-col gap-1 invisible absolute left-0 bg-bkg-secondary rounded-lg z-10 border min-w-[180px] shadow-lg transition-opacity ease-in-out delay-100 duration-300 p-4
 }
 
 
-.dropdown:hover> .dropdown-content {
+.dropdown:hover>.dropdown-content {
   @apply opacity-100 visible
 }
 
@@ -1247,5 +1348,26 @@ p {
 ::-webkit-scrollbar-thumb {
   background-color: #C8C8C8;
   border-radius: 10px;
+}
+
+
+.tab {
+  @apply flex justify-between w-fit rounded-lg shadow-inner p-1 bg-bkg-secondary gap-2
+}
+
+button {
+  @apply disabled:opacity-75 flex justify-center items-center relative text-label-primary cursor-pointer py-[4px] rounded-md w-[full] text-[10px] sm:text-[12px] font-medium px-6
+}
+
+button:hover {
+  @apply bg-bkg-primary text-label-primary transition-colors duration-700
+}
+
+.active {
+  @apply bg-bkg-primary text-label-primary transition-colors duration-300
+}
+
+.active:hover {
+  @apply bg-bkg-primary text-label-primary transition-colors duration-300 cursor-default
 }
 </style>

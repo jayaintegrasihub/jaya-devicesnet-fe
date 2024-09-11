@@ -51,7 +51,7 @@ const items = []
         <div class="flex flex-col w-full gap-4">
           <div class="flex justify-between items-start w-full">
             <div class="flex gap-5 items-center">
-              <BaseIndicator :status="'ONLINE'" />
+              <BaseIndicator :status="statusDeviceDetail.status" />
               <h1 class="text-label-primary">{{ statusDeviceDetail.alias }}</h1>
             </div>
             <!-- <IconButton type="submit" class="outlined" label="Edit" @click="">

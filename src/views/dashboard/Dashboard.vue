@@ -408,8 +408,8 @@ async function showOfflineNodeDetail(id) {
                 <h1 class="text-label-primary text-lg font-semibold">
                   Total Devices
                 </h1>
-                <img v-if="!isDark" src="../../assets/device-icon.svg" height="32px" width="32px" alt="">
-                <img v-if="isDark" src="../../assets/device-icon-white.svg" height="32px" width="32px" alt="">
+                <img v-if="!isDark" src="../../assets/device-icon.svg" height="30px" width="30px" alt="">
+                <img v-if="isDark" src="../../assets/device-icon-white.svg" height="30px" width="30px" alt="">
               </div>
               <h1 class="text-accent-1 self-center text-center text-[30px] sm:text-[50px] font-medium">
                 {{ totalDevices }}
@@ -422,8 +422,8 @@ async function showOfflineNodeDetail(id) {
                   <p class="text-label-primary text-xs sm:text-[16px] font-semibold">
                     Gateways
                   </p>
-                  <img v-if="!isDark" src="../../assets/gateway-icon.svg" height="30px" width="30px" alt="">
-                  <img v-if="isDark" src="../../assets/gateway-icon-white.svg" height="30px" width="30px" alt="">
+                  <img v-if="!isDark" src="../../assets/gateway-icon.svg" height="24px" width="24px" alt="">
+                  <img v-if="isDark" src="../../assets/gateway-icon-white.svg" height="24px" width="24px" alt="">
                 </div>
                 <div class="h-full flex items-center justify-center">
                   <p class="text-accent-1 text-center text-lg sm:text-[32px] font-medium">
@@ -437,8 +437,8 @@ async function showOfflineNodeDetail(id) {
                   <p class="text-label-primary text-xs sm:text-[16px] font-semibold">
                     Nodes
                   </p>
-                  <img v-if="!isDark" src="../../assets/node-icon.svg" height="30px" width="30px" alt="">
-                  <img v-if="isDark" src="../../assets/node-icon-white.svg" height="30px" width="30px" alt="">
+                  <img v-if="!isDark" src="../../assets/node-icon.svg" height="24px" width="24px" alt="">
+                  <img v-if="isDark" src="../../assets/node-icon-white.svg" height="24px" width="24px" alt="">
                 </div>
                 <div class="h-full flex items-center justify-center">
                   <p class="text-accent-1 text-center text-lg sm:text-[32px] font-medium">
@@ -619,9 +619,9 @@ async function showOfflineNodeDetail(id) {
                   </div>
                 </div>
 
-                <div v-if="gatewaysGroupBy.length === 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div v-if="gatewaysGroupBy.length === 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px] pb-2">
                   <div @click.left="goToDeviceDetailPage(data.device)"
-                    class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200"
+                    class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit "
                     v-for="data in gatewaysData">
                     <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
                       <div class="flex justify-between items-center">
@@ -693,9 +693,9 @@ async function showOfflineNodeDetail(id) {
                       {{ gatewaysGroupBy[0] }} {{ key }}
                     </h1>
                   </div>
-                  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px] pb-2">
                     <div @click="goToDeviceDetailPage(data.device)"
-                      class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200"
+                      class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit "
                       v-for="data in value">
                       <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
                         <div class="flex justify-between items-center">
@@ -778,7 +778,7 @@ async function showOfflineNodeDetail(id) {
                       </div>
                       <div class="grid grid-cols-3">
                         <div v-for="data in innerGroup" :key="data.device" @click="goToDeviceDetailPage(data.device)"
-                          class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200">
+                          class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit ">
                           <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
 
                             <div class="flex justify-between items-center">
@@ -882,9 +882,9 @@ async function showOfflineNodeDetail(id) {
                     </div>
                   </div>
                 </div>
-                <div v-if="nodesGroupBy.length === 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                <div v-if="nodesGroupBy.length === 0" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px] pb-2">
                   <div @click="goToDeviceDetailPage(data.device)"
-                    class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200"
+                    class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit "
                     v-for="data in nodesData">
                     <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
                       <div class="flex justify-between items-center">
@@ -956,9 +956,9 @@ async function showOfflineNodeDetail(id) {
                       {{ nodesGroupBy[0] }} {{ key }}
                     </h1>
                   </div>
-                  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px] pb-2">
                     <div @click="goToDeviceDetailPage(data.device)"
-                      class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200"
+                      class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit "
                       v-for="data in value">
                       <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
                         <div class="flex justify-between items-center">
@@ -1041,7 +1041,7 @@ async function showOfflineNodeDetail(id) {
                       </div>
                       <div class="grid grid-cols-3">
                         <div v-for="data in innerGroup" :key="data.device" @click="goToDeviceDetailPage(data.device)"
-                          class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200">
+                          class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit ">
                           <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
 
                             <div class="flex justify-between items-center">

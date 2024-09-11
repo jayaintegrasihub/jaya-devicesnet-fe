@@ -170,7 +170,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.gatewaysData = gateways
         this.gatewaysData.map((data) => {
           console.log(Math.floor((new Date() - new Date(data._time)) / 1000))
-          // data.lastHeard = formatUptime(Math.floor((new Date() - new Date(data._time)) / 1000))
+          data.lastHeard = formatUptime(Math.floor((new Date() - new Date(data._time)) / 1000))
           data._time = moment(data._time).format('MM/DD/YYYY , HH:mm')
           data.humidity = data.humidity.toFixed(1)
           data.temperature = data.temperature.toFixed(1)
@@ -180,7 +180,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
 
         this.nodesData = nodes
         this.nodesData.map((data) => {
-          data._time = new Date(data._time).toLocaleString()
+          data._time = moment(data._time).format('MM/DD/YYYY , HH:mm')
           data.lastHeard = formatUptime(Math.floor((new Date() - new Date(data._time)) / 1000))
           data.humidity = data.humidity.toFixed(1)
           data.temperature = data.temperature.toFixed(1)

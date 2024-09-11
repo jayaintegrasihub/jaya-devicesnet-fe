@@ -4,7 +4,7 @@
       <path :d="path" />
       <slot></slot>
     </svg>
-    <p class="text-[12px] transition-all duration-300 text-label-primary">{{ menuName }}</p>
+    <p class="text-[12px] transition-all duration-300 text-white">{{ menuName }}</p>
     <div class="flying-text">
       <p>{{ menuName }}</p>
     </div>
@@ -44,16 +44,16 @@ const props = defineProps({
 }
 
 svg {
-  @apply cursor-pointer transition-all ease-in-out z-50 fill-label-secondary
+  @apply cursor-pointer transition-all ease-in-out z-50 fill-white
 }
 
 
 .active {
-  @apply border-l-4 border-accent-1 z-50 px-3 
+  @apply border-l-4 border-white z-50 px-3 bg-var-softblue
 }
 
 .active svg {
-  @apply fill-accent-1 z-50
+  @apply fill-white z-50
 }
 
 svg:hover {
@@ -65,6 +65,6 @@ svg:hover+.flying-text {
 }
 
 .flying-text {
-  @apply absolute w-auto py-2 px-8 ml-4 min-w-max left-12 rounded-md shadow-md text-label-primary bg-gray-900 text-xs font-bold transition-all duration-200 scale-0 origin-left z-50
+  @apply absolute w-auto py-2 px-8 ml-4 min-w-max left-12 rounded-md shadow-md text-white bg-gray-900 text-xs font-bold transition-all duration-200 scale-0 origin-left z-50
 }
 </style>

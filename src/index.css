@@ -111,7 +111,8 @@ input:-webkit-autofill:active {
     --color-accent2: #FFFF;
     --color-red-accent: #E63946;
     --color-green-accent: #57C09B;
-    --color-blue-accent: #2482E6;
+    --color-blue-accent: #0989C0;
+    --color-softblue-accent: #2398ca;
   }
 
   :root[data-theme="dark"] {
@@ -127,7 +128,9 @@ input:-webkit-autofill:active {
     --color-accent2: #0989C0;
     --color-red-accent: #E63946;
     --color-green-accent: #57C09B;
-    --color-blue-accent: #2482E6;
+    --color-blue-accent: #1C1C1E;
+    --color-softblue-accent: #3A3A3C;
+    
 
   }
 }

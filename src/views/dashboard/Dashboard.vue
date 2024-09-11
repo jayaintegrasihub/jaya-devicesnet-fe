@@ -1227,11 +1227,12 @@ p {
 }
 
 .dropdown-content {
-  @apply opacity-0 absolute right-0 bg-bkg-secondary rounded-lg z-10 border min-w-[180px] shadow-lg transition-opacity ease-in-out delay-100 duration-300 p-4 flex flex-col gap-1
+  @apply opacity-0 flex flex-col gap-1 invisible absolute right-0 bg-bkg-secondary rounded-lg z-10 border min-w-[180px] shadow-lg transition-opacity ease-in-out delay-100 duration-300 p-4
 }
 
-.dropdown:hover>.dropdown-content {
-  @apply opacity-100
+
+.dropdown:hover> .dropdown-content {
+  @apply opacity-100 visible
 }
 
 

@@ -393,6 +393,7 @@ function selectedNodesFwChanged() {
 }
 
 function goToDeviceDetailPage(id) {
+  console.log(id)
   router.push({ name: 'deviceDetail', params: { id: id } })
 }
 
@@ -1199,6 +1200,13 @@ async function showOfflineNodeDetail(id) {
                       <div class="w-full flex justify-center">
                         <BaseIndicator :status="item.status" />
                       </div>
+                    </template>
+                    <template #item-operation="item">
+                      <svg class="cursor-pointer" width="24" height="24" viewBox="0 0 24 24" fill="none"
+                        xmlns="http://www.w3.org/2000/svg" @click="goToDeviceDetailPage(item.device)">
+                        <path d="M13 7H22V9H13V7ZM13 15H22V17H13V15ZM16 11H22V13H16V11ZM13 12L8 7V11H2V13H8V17L13 12Z"
+                          fill="#353535" fill-opacity="0.6" />
+                      </svg>
                     </template>
                   </EasyDataTable>
                 </div>

@@ -410,6 +410,10 @@ function goToDeviceDetailPage(id) {
   router.push({ name: 'deviceDetail', params: { id: id } })
 }
 
+function goToGatewayDetailPage(id) {
+  console.log(id)
+  router.push({ name: 'gatewayDetail', params: { id: id } })
+}
 
 // Offline Devices
 
@@ -695,66 +699,69 @@ async function showOfflineNodeDetail(id) {
                   <div v-if="gatewaysGroupBy.length === 0"
                     class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px]-[200px] pb-2">
                     <div
-                      class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 transition-transform delay-75 duration-200 h-fit "
-                      v-for="data in gatewaysData">
-                      <div class="flex justify-between items-center">
-                        <div class="flex gap-5 items-center">
-                          <BaseIndicator :status="data.status" />
-                          <h1 class="font-medium text-base sm:text-lg text-label-primary">
-                            {{ data.alias }}
-                          </h1>
-                        </div>
-                        <div>
-                          <SignalIndicator :status=data.rssi />
-                        </div>
-                      </div>
-                      <div class="grid grid-cols-1 xl:grid-cols-2 justify-between">
-                        <div class="flex flex-col gap-1">
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="font-medium text-label-primary opacity-80">SN:</p>
-                            <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
+                      class="cursor-pointer hover:scale-[101%] border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 transition-transform delay-75 duration-200 h-fit "
+                      v-for="data in gatewaysData" @click="goToGatewayDetailPage(data.device)">
+                      <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
+
+                        <div class="flex justify-between items-center">
+                          <div class="flex gap-5 items-center">
+                            <BaseIndicator :status="data.status" />
+                            <h1 class="font-medium text-base sm:text-lg text-label-primary">
+                              {{ data.alias }}
+                            </h1>
                           </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
-                            <div class="flex flex-col gap-1">
-                              <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
-                              <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                          <div>
+                            <SignalIndicator :status=data.rssi />
+                          </div>
+                        </div>
+                        <div class="grid grid-cols-1 xl:grid-cols-2 justify-between">
+                          <div class="flex flex-col gap-1">
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                              <p class="font-medium text-label-primary opacity-80">SN:</p>
+                              <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
                             </div>
-                            <div class="dropdown">
-                              <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
-                                class="cursor-pointer">
-                              <div class="dropdown-content w-full">
-                                {{ data.lastHeard }} ago
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
+                              <div class="flex flex-col gap-1">
+                                <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                              </div>
+                              <div class="dropdown">
+                                <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
+                                  class="cursor-pointer">
+                                <div class="dropdown-content w-full">
+                                  {{ data.lastHeard }} ago
+                                </div>
                               </div>
                             </div>
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                              <p class="text-label-primary font-medium opacity-80">Humidity:</p>
+                              <p class="text-label-primary font-semibold opacity-90">{{ data.humidity }}%</p>
+                            </div>
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                              <p class="text-label-primary font-medium opacity-80">Temperature:</p>
+                              <p class="text-label-primary font-semibold opacity-90">{{ data.temperature }}°C</p>
+                            </div>
                           </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Humidity:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.humidity }}%</p>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Temperature:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.temperature }}°C</p>
+                          <div class="flex flex-col gap-1">
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                              <p class="text-label-primary font-medium opacity-80">Fw Version:</p>
+                              <p class="text-label-primary font-semibold opacity-90">{{ data.fwVersion }}</p>
+                            </div>
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                              <p class="text-label-primary font-medium opacity-80">Hw Version:</p>
+                              <p class="text-label-primary font-semibold opacity-90">{{ data.hwVersion }}</p>
+                            </div>
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                              <p class="text-label-primary font-medium opacity-80">Lora dBm:</p>
+                              <p class="text-label-primary font-semibold opacity-90">{{ data.rssi }}</p>
+                            </div>
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                              <p class="text-label-primary font-medium opacity-80">Uptime:</p>
+                              <p class="text-label-primary font-semibold opacity-90">{{ data.uptime }}</p>
+                            </div>
                           </div>
                         </div>
-                        <div class="flex flex-col gap-1">
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Fw Version:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.fwVersion }}</p>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Hw Version:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.hwVersion }}</p>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Lora dBm:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.rssi }}</p>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Uptime:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.uptime }}</p>
-                          </div>
-                        </div>
-                      </div>
+                      </a>
                     </div>
                   </div>
 
@@ -768,7 +775,7 @@ async function showOfflineNodeDetail(id) {
                     <div
                       class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px]-[200px] pb-2">
                       <div
-                        class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 transition-transform delay-75 duration-200 h-fit "
+                        class="cursor-pointer hover:scale-[101%] border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 transition-transform delay-75 duration-200 h-fit "
                         v-for="data in value">
                         <div class="flex justify-between items-center">
                           <div class="flex gap-5 items-center">
@@ -849,7 +856,7 @@ async function showOfflineNodeDetail(id) {
                         </div>
                         <div class="grid grid-cols-3">
                           <div v-for="data in innerGroup" :key="data.device"
-                            class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 transition-transform delay-75 duration-200 h-fit ">
+                            class="cursor-pointer hover:scale-[101%] border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 transition-transform delay-75 duration-200 h-fit ">
                             <div class="flex justify-between items-center">
                               <div class="flex gap-5 items-center">
                                 <BaseIndicator :status="data.status" />
@@ -918,9 +925,8 @@ async function showOfflineNodeDetail(id) {
                   <div class="w-fit">
                     <SearchBar class="outlined" v-model="searchGateway" placeholder="Search by SN, alias ..." />
                   </div>
-                  <EasyDataTable fixed-expand :rows-per-page="25" table-class-name="customize-table"
-                    :headers="gwHeader" :items="gatewaysData" theme-color="#1363df" :search-value="searchGateway"
-                    sort-by="status">
+                  <EasyDataTable fixed-expand :rows-per-page="25" table-class-name="customize-table" :headers="gwHeader"
+                    :items="gatewaysData" theme-color="#1363df" :search-value="searchGateway" sort-by="status">
                     <template #item-status="item">
                       <div class="w-full flex justify-center">
                         <BaseIndicator :status="item.status" />

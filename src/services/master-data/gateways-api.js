@@ -7,6 +7,9 @@ export default {
   getGateway(id) {
     return apiClient.get(`gateways/${id}`)
   },
+  getGatewayNodes(id) {
+    return apiClient.get(`gateways/find-node/${id}`)
+  },
   createGateway(data) {
     return apiClient.post('gateways',data)
   },

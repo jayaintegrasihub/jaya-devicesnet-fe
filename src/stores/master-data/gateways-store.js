@@ -6,6 +6,7 @@ import moment from 'moment'
 export const useGatewaysStore = defineStore('Gateways', {
   state: () => ({
     gateways: ref([]),
+    gatewayNodes: ref([]),
     gateway: ref({}),
     getGatewaysStatus: ref({
       isError: null,
@@ -13,6 +14,11 @@ export const useGatewaysStore = defineStore('Gateways', {
       code: null,
     }),
     getGatewayStatus: ref({
+      isError: null,
+      message: null,
+      code: null,
+    }),
+    getGatewayNodesStatus: ref({
       isError: null,
       message: null,
       code: null,
@@ -36,7 +42,8 @@ export const useGatewaysStore = defineStore('Gateways', {
     createGatewayLoading: ref(false),
     editGatewayLoading: ref(false),
     getGatewaysLoading: ref(false),
-    getGatewayLoading: ref(false)
+    getGatewayLoading: ref(false),
+    getGatewayNodesLoading: ref(false)
   }),
   actions: {
     async getGateways() {
@@ -81,6 +88,29 @@ export const useGatewaysStore = defineStore('Gateways', {
         this.getGatewayStatus.code = err.response.data.status
         this.getGatewayStatus.message = JSON.stringify(err.response.data.data)
         this.getGatewayStatus.isError = true
+        return err
+      }
+    },
+    async getGatewayNodes(id) {
+      this.getGatewayNodesLoading = true
+      try {
+        const res = await gatewaysAPI.getGatewayNodes(id)
+        this.getGatewayNodesLoading = false
+        console.log(res)
+        this.gatewayNodes = res.data.nodes
+        this.gatewayNodes.map((data,index) => {
+          data.number = index+1
+        })
+        // console.log(' data', this.gateway)
+        this.getGatewayNodesStatus.code = res.status
+        this.getGatewayNodesStatus.isError = false
+        this.getGatewayNodesStatus.message = "Data Fetched"
+      } catch (err) {
+        console.error(err)
+        this.getGatewayNodesLoading = false
+        this.getGatewayNodesStatus.code = err.response.data.status
+        this.getGatewayNodesStatus.message = JSON.stringify(err.response.data.data)
+        this.getGatewayNodesStatus.isError = true
         return err
       }
     },

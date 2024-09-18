@@ -6,6 +6,7 @@ import { storeToRefs } from 'pinia'
 import router from '@/router'
 import { useTelemetryStore } from '@/stores/telemetry/telemetry-store'
 import { useGatewaysStore } from '@/stores/master-data/gateways-store'
+import SearchBar from '@/components/input/SearchBar.vue'
 
 
 const telemetryStore = useTelemetryStore()
@@ -38,9 +39,12 @@ const header = [
 //table
 const nodeListHeader = [
   { text: "No", value: "number", sortable: true },
+  { text: "Node Alias", value: "alias", sortable: true },
   { text: "Node SN", value: "device", sortable: true },
   { text: "Group", value: "group", sortable: true },
 ]
+
+const searchValue = ref('')
 
 const items = []
 
@@ -168,7 +172,10 @@ const items = []
               <p class="font-semibold text-lg">{{ gatewayNodes.length }}</p>
             </div>
           </div>
-          <EasyDataTable :rows-per-page="10" table-class-name="customize-table" :headers="nodeListHeader"
+          <div class="w-fit">
+            <SearchBar class="outlined" v-model="searchValue" placeholder="Search by SN, alias ..." />
+          </div>
+          <EasyDataTable :search-value="searchValue" :rows-per-page="10" table-class-name="customize-table" :headers="nodeListHeader"
             :items="gatewayNodes" theme-color="#1363df">
             <template #item-group="item">
               <div class="flex gap-4 py-2">

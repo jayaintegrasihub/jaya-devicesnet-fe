@@ -670,7 +670,8 @@ async function showOfflineNodeDetail(id) {
                       </div>
                       <div class="dropdown">
                         <div class="p-2 rounded-lg cursor-pointer bg-bkg-tertiary">
-                          <img src="../../assets/group-icon.svg" alt="" height="16px" width="16px">
+                          <img v-if="!isDark" src="../../assets/group-icon-white.svg" alt="" height="16px" width="16px">
+                          <img v-if="isDark" src="../../assets/group-icon-black.svg" alt="" height="16px" width="16px">
                         </div>
                         <div class="dropdown-content">
                           <div v-for="(option, index) in type.groups" :key="index" class="">
@@ -679,7 +680,7 @@ async function showOfflineNodeDetail(id) {
                                 v-model="gatewaysGroupBy"
                                 :disabled="gatewaysGroupBy.length >= 2 && !gatewaysGroupBy.includes(option)">
                               <div
-                                class="font-normal peer-checked:text-[#3962EB] text-sm rounded-lg w-full h-6 bg-gray-200 peer peer-checked:bg-[#E2EBF6]">
+                                class="font-normal peer-checked:text-[#3962EB] text-sm rounded-lg w-full h-6 bg-bkg-primary peer peer-checked:bg-bkg-tertiary">
                                 <p class="h-full flex items-center justify-center ">{{ option }}</p>
                               </div>
                             </label>
@@ -953,7 +954,8 @@ async function showOfflineNodeDetail(id) {
                       </div>
                       <div class="dropdown">
                         <div class="p-2 rounded-lg cursor-pointer bg-bkg-tertiary">
-                          <img src="../../assets/group-icon.svg" alt="" height="16px" width="16px">
+                          <img v-if="!isDark" src="../../assets/group-icon-white.svg" alt="" height="16px" width="16px">
+                          <img v-if="isDark" src="../../assets/group-icon-black.svg" alt="" height="16px" width="16px">
                         </div>
                         <div class="dropdown-content">
                           <div v-for="(option, index) in type.groups" :key="index" class="">

@@ -47,7 +47,7 @@ input::placeholder {
 }
 .outlined {
   @apply
-  border-solid border rounded-lg
+  border-solid border border-bkg-tertiary rounded-lg
 }
 
 svg {

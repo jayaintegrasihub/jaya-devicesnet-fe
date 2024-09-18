@@ -230,7 +230,7 @@ function changeNodeView(navigation) {
   selectedNodesView.value = navigation
 }
 
-const nodeHeader = [
+const gwHeader = [
   { text: "", value: "status", sortable: true, width: 30 },
   { text: "Serial Number", value: "device", sortable: true },
   { text: "Alias", value: "alias", sortable: true },
@@ -243,22 +243,35 @@ const nodeHeader = [
   { text: "Hw. Version", value: "hwVersion", sortable: true },
   { text: "", value: "operation", width: 50 },
 ]
+const nodeHeader = [
+  { text: "", value: "status", sortable: true, width: 30 },
+  { text: "Serial Number", value: "device", sortable: true },
+  { text: "Conn. Gateway", value: "gateway", sortable: true },
+  { text: "Alias", value: "alias", sortable: true },
+  { text: "Last Heard", value: "_time", sortable: true },
+  { text: "Uptime", value: "uptime", sortable: true },
+  { text: "Humidity (%)", value: "humidity", sortable: true },
+  { text: "Temperature (C)", value: "temperature", sortable: true },
+  { text: "Radio dBm", value: "rssi", sortable: true },
+  { text: "Fw. Version", value: "fwVersion", sortable: true },
+  { text: "Hw. Version", value: "hwVersion", sortable: true },
+  { text: "", value: "operation", width: 50 },
+]
 
 const { isDark } = storeToRefs(useThemeStore())
-const delay = (time) => new Promise((resolve) => setTimeout(resolve, time))
-const whileState = ref(true)
-const searchValue = ref('')
+const searchNode = ref('')
+const searchGateway = ref('')
 
-const filteredTelemetryData = computed(() => {
-  if (!searchValue.value.trim()) {
-    return telemetryData.value
-  }
-  const searchTerm = searchValue.value.trim().toLowerCase()
-  return telemetryData.value.filter(telemetry => {
-    return telemetry.alias.toLowerCase().includes(searchTerm) ||
-      telemetry.device.toLowerCase().includes(searchTerm)
-  })
-})
+// const filteredTelemetryData = computed(() => {
+//   if (!searchNode.value.trim()) {
+//     return telemetryData.value
+//   }
+//   const searchTerm = searchNode.value.trim().toLowerCase()
+//   return telemetryData.value.filter(telemetry => {
+//     return telemetry.alias.toLowerCase().includes(searchTerm) ||
+//       telemetry.device.toLowerCase().includes(searchTerm)
+//   })
+// })
 
 
 onMounted(async () => {
@@ -397,6 +410,10 @@ function goToDeviceDetailPage(id) {
   router.push({ name: 'deviceDetail', params: { id: id } })
 }
 
+function goToGatewayDetailPage(id) {
+  console.log(id)
+  router.push({ name: 'gatewayDetail', params: { id: id } })
+}
 
 // Offline Devices
 
@@ -629,7 +646,7 @@ async function showOfflineNodeDetail(id) {
 
       <div class="p-[20px] flex flex-col gap-[20px]">
         <!-- <div class="flex flex-col md:flex-row gap-4 md:justify-between">
-          <SearchBar v-model="searchValue" />
+          <SearchBar v-model="searchNode" />
         </div> -->
         <div
           class="flex-1 py-8 bg-bkg-primary rounded-[6px] sm:rounded-[24px] shadow border border-bkg-secondary flex-col gap-5 flex">
@@ -682,66 +699,69 @@ async function showOfflineNodeDetail(id) {
                   <div v-if="gatewaysGroupBy.length === 0"
                     class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px]-[200px] pb-2">
                     <div
-                      class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 transition-transform delay-75 duration-200 h-fit "
-                      v-for="data in gatewaysData">
-                      <div class="flex justify-between items-center">
-                        <div class="flex gap-5 items-center">
-                          <BaseIndicator :status="data.status" />
-                          <h1 class="font-medium text-base sm:text-lg text-label-primary">
-                            {{ data.alias }}
-                          </h1>
-                        </div>
-                        <div>
-                          <SignalIndicator :status=data.rssi />
-                        </div>
-                      </div>
-                      <div class="grid grid-cols-1 xl:grid-cols-2 justify-between">
-                        <div class="flex flex-col gap-1">
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="font-medium text-label-primary opacity-80">SN:</p>
-                            <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
+                      class="cursor-pointer hover:scale-[101%] border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 transition-transform delay-75 duration-200 h-fit "
+                      v-for="data in gatewaysData" @click="goToGatewayDetailPage(data.device)">
+                      <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
+
+                        <div class="flex justify-between items-center">
+                          <div class="flex gap-5 items-center">
+                            <BaseIndicator :status="data.status" />
+                            <h1 class="font-medium text-base sm:text-lg text-label-primary">
+                              {{ data.alias }}
+                            </h1>
                           </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
-                            <div class="flex flex-col gap-1">
-                              <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
-                              <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                          <div>
+                            <SignalIndicator :status=data.rssi />
+                          </div>
+                        </div>
+                        <div class="grid grid-cols-1 xl:grid-cols-2 justify-between">
+                          <div class="flex flex-col gap-1">
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                              <p class="font-medium text-label-primary opacity-80">SN:</p>
+                              <h2 class="font-semibold text-label-primary opacity-90">{{ data.device }}</h2>
                             </div>
-                            <div class="dropdown">
-                              <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
-                                class="cursor-pointer">
-                              <div class="dropdown-content w-full">
-                                {{ data.lastHeard }} ago
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
+                              <div class="flex flex-col gap-1">
+                                <p class="text-label-primary font-medium opacity-80 ">Last Heard:</p>
+                                <p class="text-label-primary font-semibold opacity-90">{{ data._time }}</p>
+                              </div>
+                              <div class="dropdown">
+                                <img src="../../assets/info-icon.svg" alt="" height="14px" width="14px"
+                                  class="cursor-pointer">
+                                <div class="dropdown-content w-full">
+                                  {{ data.lastHeard }} ago
+                                </div>
                               </div>
                             </div>
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                              <p class="text-label-primary font-medium opacity-80">Humidity:</p>
+                              <p class="text-label-primary font-semibold opacity-90">{{ data.humidity }}%</p>
+                            </div>
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                              <p class="text-label-primary font-medium opacity-80">Temperature:</p>
+                              <p class="text-label-primary font-semibold opacity-90">{{ data.temperature }}°C</p>
+                            </div>
                           </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Humidity:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.humidity }}%</p>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Temperature:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.temperature }}°C</p>
+                          <div class="flex flex-col gap-1">
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                              <p class="text-label-primary font-medium opacity-80">Fw Version:</p>
+                              <p class="text-label-primary font-semibold opacity-90">{{ data.fwVersion }}</p>
+                            </div>
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                              <p class="text-label-primary font-medium opacity-80">Hw Version:</p>
+                              <p class="text-label-primary font-semibold opacity-90">{{ data.hwVersion }}</p>
+                            </div>
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                              <p class="text-label-primary font-medium opacity-80">Lora dBm:</p>
+                              <p class="text-label-primary font-semibold opacity-90">{{ data.rssi }}</p>
+                            </div>
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                              <p class="text-label-primary font-medium opacity-80">Uptime:</p>
+                              <p class="text-label-primary font-semibold opacity-90">{{ data.uptime }}</p>
+                            </div>
                           </div>
                         </div>
-                        <div class="flex flex-col gap-1">
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Fw Version:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.fwVersion }}</p>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Hw Version:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.hwVersion }}</p>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Lora dBm:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.rssi }}</p>
-                          </div>
-                          <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
-                            <p class="text-label-primary font-medium opacity-80">Uptime:</p>
-                            <p class="text-label-primary font-semibold opacity-90">{{ data.uptime }}</p>
-                          </div>
-                        </div>
-                      </div>
+                      </a>
                     </div>
                   </div>
 
@@ -755,7 +775,7 @@ async function showOfflineNodeDetail(id) {
                     <div
                       class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px]-[200px] pb-2">
                       <div
-                        class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 transition-transform delay-75 duration-200 h-fit "
+                        class="cursor-pointer hover:scale-[101%] border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 transition-transform delay-75 duration-200 h-fit "
                         v-for="data in value">
                         <div class="flex justify-between items-center">
                           <div class="flex gap-5 items-center">
@@ -836,7 +856,7 @@ async function showOfflineNodeDetail(id) {
                         </div>
                         <div class="grid grid-cols-3">
                           <div v-for="data in innerGroup" :key="data.device"
-                            class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 transition-transform delay-75 duration-200 h-fit ">
+                            class="cursor-pointer hover:scale-[101%] border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 transition-transform delay-75 duration-200 h-fit ">
                             <div class="flex justify-between items-center">
                               <div class="flex gap-5 items-center">
                                 <BaseIndicator :status="data.status" />
@@ -903,11 +923,10 @@ async function showOfflineNodeDetail(id) {
                 </div>
                 <div :class="selectedGatewaysView === 'table' ? '' : 'hidden'" class="flex flex-col gap-4">
                   <div class="w-fit">
-                    <SearchBar class="outlined" v-model="searchValue" placeholder="Search by SN, alias ..." />
+                    <SearchBar class="outlined" v-model="searchGateway" placeholder="Search by SN, alias ..." />
                   </div>
-                  <EasyDataTable fixed-expand :rows-per-page="25" table-class-name="customize-table"
-                    :headers="nodeHeader" :items="gatewaysData" theme-color="#1363df" :search-value="searchValue"
-                    sort-by="status">
+                  <EasyDataTable fixed-expand :rows-per-page="25" table-class-name="customize-table" :headers="gwHeader"
+                    :items="gatewaysData" theme-color="#1363df" :search-value="searchGateway" sort-by="status">
                     <template #item-status="item">
                       <div class="w-full flex justify-center">
                         <BaseIndicator :status="item.status" />
@@ -1006,6 +1025,10 @@ async function showOfflineNodeDetail(id) {
                             </div>
                           </div>
                           <div class="flex flex-col gap-1">
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                              <p class="text-label-primary font-medium opacity-80">Gateway:</p>
+                              <p class="text-label-primary font-semibold opacity-90">{{ data.gateway }}</p>
+                            </div>
                             <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
                               <p class="text-label-primary font-medium opacity-80">Fw Version:</p>
                               <p class="text-label-primary font-semibold opacity-90">{{ data.fwVersion }}</p>
@@ -1191,10 +1214,10 @@ async function showOfflineNodeDetail(id) {
                 </div>
                 <div :class="selectedNodesView === 'table' ? '' : 'hidden'" class="flex flex-col gap-4">
                   <div class="w-fit">
-                    <SearchBar class="outlined" v-model="searchValue" placeholder="Search by SN, alias ..." />
+                    <SearchBar class="outlined" v-model="searchNode" placeholder="Search by SN, alias ..." />
                   </div>
                   <EasyDataTable fixed-expand :rows-per-page="25" table-class-name="customize-table"
-                    :headers="nodeHeader" :items="nodesData" theme-color="#1363df" :search-value="searchValue"
+                    :headers="nodeHeader" :items="nodesData" theme-color="#1363df" :search-value="searchNode"
                     sort-by="status">
                     <template #item-status="item">
                       <div class="w-full flex justify-center">

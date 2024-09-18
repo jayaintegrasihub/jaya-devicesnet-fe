@@ -34,6 +34,13 @@ const router = createRouter({
       meta: { requiresAuth: true} ,
       props: true,
       component: () => import('../views/DeviceDetail.vue')
+    },
+    {
+      path: '/gateway-detail/:id',
+      name: 'gatewayDetail',
+      meta: { requiresAuth: true} ,
+      props: true,
+      component: () => import('../views/GatewayDetail.vue')
     }
   ]
 })

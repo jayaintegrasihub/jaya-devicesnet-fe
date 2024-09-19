@@ -700,7 +700,7 @@ async function showOfflineNodeDetail(id) {
                   <div v-if="gatewaysGroupBy.length === 0"
                     class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px]-[200px] pb-2">
                     <div
-                      class="cursor-pointer hover:scale-[101%] border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 transition-transform delay-75 duration-200 h-fit "
+                      class="cursor-pointer hover:shadow-sm hover:opacity-80 border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 flex flex-col gap-2 transition-transform delay-75 duration-200 h-fit "
                       v-for="data in gatewaysData" @click="goToGatewayDetailPage(data.device)">
                       <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
 
@@ -776,7 +776,7 @@ async function showOfflineNodeDetail(id) {
                     <div
                       class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px]-[200px] pb-2">
                       <div
-                        class="cursor-pointer hover:scale-[101%] border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 transition-transform delay-75 duration-200 h-fit "
+                        class="cursor-pointer hover:shadow-sm hover:opacity-80 border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 flex flex-col gap-2 transition-transform delay-75 duration-200 h-fit "
                         v-for="data in value">
                         <div class="flex justify-between items-center">
                           <div class="flex gap-5 items-center">
@@ -857,7 +857,7 @@ async function showOfflineNodeDetail(id) {
                         </div>
                         <div class="grid grid-cols-3">
                           <div v-for="data in innerGroup" :key="data.device"
-                            class="cursor-pointer hover:scale-[101%] border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 transition-transform delay-75 duration-200 h-fit ">
+                            class="cursor-pointer hover:shadow-sm hover:opacity-80 border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 flex flex-col gap-2 transition-transform delay-75 duration-200 h-fit ">
                             <div class="flex justify-between items-center">
                               <div class="flex gap-5 items-center">
                                 <BaseIndicator :status="data.status" />
@@ -984,7 +984,7 @@ async function showOfflineNodeDetail(id) {
                   <div v-if="nodesGroupBy.length === 0"
                     class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px]-[200px] pb-2">
                     <div @click="goToDeviceDetailPage(data.device)"
-                      class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit "
+                      class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 flex flex-col gap-2 cursor-pointer hover:shadow-sm hover:opacity-80 transition-transform delay-75 duration-200 h-fit "
                       v-for="data in nodesData">
                       <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
                         <div class="flex justify-between items-center">
@@ -1063,7 +1063,7 @@ async function showOfflineNodeDetail(id) {
                     <div
                       class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px]-[200px] pb-2">
                       <div @click="goToDeviceDetailPage(data.device)"
-                        class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit "
+                        class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 flex flex-col gap-2 cursor-pointer hover:shadow-sm hover:opacity-80 transition-transform delay-75 duration-200 h-fit "
                         v-for="data in value">
                         <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
                           <div class="flex justify-between items-center">
@@ -1146,7 +1146,7 @@ async function showOfflineNodeDetail(id) {
                         </div>
                         <div class="grid grid-cols-3">
                           <div v-for="data in innerGroup" :key="data.device" @click="goToDeviceDetailPage(data.device)"
-                            class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 shadow-md flex flex-col gap-2 cursor-pointer hover:scale-[101%] transition-transform delay-75 duration-200 h-fit ">
+                            class="border border-bkg-tertiary border-opacity-60 rounded-[16px] px-6 py-6 flex flex-col gap-2 cursor-pointer hover:shadow-sm hover:opacity-80 transition-transform delay-75 duration-200 h-fit ">
                             <a :href="`/device-detail/${data.device}`" target="_blank" @click.prevent>
 
                               <div class="flex justify-between items-center">

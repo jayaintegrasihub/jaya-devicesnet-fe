@@ -1,21 +1,26 @@
 <script setup>
-import { onMounted,onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import IconButton from '@/components/input/IconButton.vue'
 import BaseIndicator from '@/components/indicator/BaseIndicator.vue'
 import { storeToRefs } from 'pinia'
 import router from '@/router'
 import { useTelemetryStore } from '@/stores/telemetry/telemetry-store'
+import { useLocalStorage } from '@vueuse/core'
+import BaseButton from '@/components/input/BaseButton.vue'
 
 const telemetryStore = useTelemetryStore()
-const { getTelemetryDetailLoading, statusDeviceDetail, deviceDataLogs } = storeToRefs(useTelemetryStore())
+const { getTelemetryDetailLoading, telemetryData, getTelemetryHistoryLoading, statusDeviceDetail, deviceDataLogs, dataTags } = storeToRefs(useTelemetryStore())
 const props = defineProps(['id'])
 
 function goBack() {
   router.go(-1)
 }
-
+const telemeryLoading = ref(false)
 onMounted(async () => {
-  telemetryStore.listenTelemetryDetail(props.id)
+  telemeryLoading.value = true
+  await telemetryStore.listenTelemetryDetail(props.id)
+  telemeryLoading.value = false
+  loadHistoricalData()
 })
 
 onUnmounted(() => {
@@ -25,12 +30,33 @@ onUnmounted(() => {
 
 //table
 const header = [
-  { text: "Timestamp", value: "timestamp", sortable: true },
-  { text: "Tag", value: "tag", sortable: true },
-  { text: "Value", value: "value", sortable: true },
+  { text: "Timestamp", value: "_time", sortable: true },
+  { text: "Value", value: "_value", sortable: true },
 ]
 
-const items = []
+
+const selectedTag = useLocalStorage('selectedTag', '0')
+
+const getDateNdaysAgo = (n) => {
+  const date = new Date()
+  date.setDate(date.getDate() - n)
+  return date.toLocaleDateString('en-CA')
+}
+const startDate = ref(getDateNdaysAgo(7))
+const startTime = ref(new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }))
+const endDate = ref(new Date().toLocaleDateString('en-CA'))
+const endTime = ref(new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }))
+
+async function loadHistoricalData() {
+  const queryParams = {}
+
+  if (selectedTag.value !== '0') {
+    queryParams.fields = selectedTag.value
+    queryParams.startTime = new Date(startDate.value + 'T' + startTime.value).toISOString()
+    queryParams.endTime = new Date(endDate.value + 'T' + endTime.value).toISOString()
+    await telemetryStore.getTelemetryHistory(props.id, queryParams)
+  }
+}
 
 </script>
 <template>
@@ -144,15 +170,50 @@ const items = []
           <div class="flex flex-col gap-6">
             <h1 class="text-accent-1 font-medium text-lg">Data Logs</h1>
             <EasyDataTable fixed-header table-class-name="customize-table table-scroll" :headers="header"
-              :items="deviceDataLogs" hide-footer theme-color="#1363df">
+              :items="deviceDataLogs" hide-footer theme-color="#1363df" :loading="telemeryLoading">
             </EasyDataTable>
           </div>
         </div>
 
         <div class="flex flex-col gap-6">
-          <h1 class="text-accent-1 font-medium text-lg">Changelog</h1>
-          <EasyDataTable :rows-per-page="10" table-class-name="customize-table table-scroll" :headers="header"
-            :items="items" theme-color="#1363df"></EasyDataTable>
+          <h1 class="text-accent-1 font-medium text-lg">Historical Data</h1>
+          <div class="flex justify-between">
+            <div class="custom-select">
+              <select class="custom-select-option" name="type" id="type" v-model="selectedTag">
+                <option value="0" class="text-label-tertiary" disabled selected>Data Tag</option>
+                <option v-for="data in dataTags" :value="data">{{ data }}</option>
+              </select>
+            </div>
+            <div class="flex items-center">
+              <div class="grid grid-cols-2 gap-4">
+                <div class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit">
+                  <h2 class="font-semibold text-xs">From</h2>
+                  <div class="flex gap-6 ">
+                    <input class="cursor-pointer outline-none bg-transparent text-xs" type="date" name="startDate" id="startDate"
+                      v-model="startDate">
+                    <input class="cursor-pointer outline-none bg-transparent text-xs" type="time" name="startTime" id="startTime"
+                      v-model="startTime">
+                  </div>
+                </div>
+                <div class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit">
+                  <h2 class="font-semibold text-xs">To</h2>
+                  <div class="flex gap-6">
+                    <input class="cursor-pointer outline-none bg-transparent text-xs" type="date" name="endDate" id="endDate"
+                      v-model="endDate">
+                    <input class="cursor-pointer outline-none bg-transparent text-xs" type="time" name="endTime" id="endTime"
+                      v-model="endTime">
+                  </div>
+                </div>
+              </div>
+              <div class="w-fit">
+                <BaseButton type="submit" class="primary" label="Filter" :loading="getTelemetryHistoryLoading"
+                  @click="loadHistoricalData()" />
+              </div>
+            </div>
+          </div>
+
+          <EasyDataTable :rows-per-page="10" table-class-name="customize-table" :headers="header" :items="telemetryData"
+            theme-color="#1363df" :loading="getTelemetryHistoryLoading"></EasyDataTable>
         </div>
       </div>
     </div>
@@ -184,5 +245,28 @@ const items = []
 ::-webkit-scrollbar-thumb {
   background-color: #C8C8C8;
   border-radius: 10px;
+}
+
+
+.custom-select-option {
+  @apply outline-none text-[8px] md:text-[10px] text-label-secondary pb-[6px] px-2 rounded-lg cursor-pointer md:min-w-[200px]
+}
+
+.custom-select-option option {
+  @apply p-2 cursor-pointer
+}
+
+
+.custom-select {
+  @apply w-fit hover:bg-bkg-secondary border border-label-tertiary rounded-lg pt-[6px] px-2
+}
+
+.custom-select select {
+  font-size: 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><path fill="%23999" d="M10 12l-5-5h10l-5 5z"/></svg>') no-repeat right 1px center;
+  @apply w-full cursor-pointer focus:outline-none text-label-primary
 }
 </style>

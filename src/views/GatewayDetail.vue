@@ -12,7 +12,7 @@ import SearchBar from '@/components/input/SearchBar.vue'
 const telemetryStore = useTelemetryStore()
 const { getTelemetryDetailLoading, statusDeviceDetail, deviceDataLogs } = storeToRefs(useTelemetryStore())
 const gatewayStore = useGatewaysStore()
-const { gatewayNodes } = storeToRefs(useGatewaysStore())
+const { gatewayNodes, getGatewayNodesLoading } = storeToRefs(useGatewaysStore())
 
 const props = defineProps(['id'])
 
@@ -165,18 +165,18 @@ const items = []
         </div>
 
         <div class="flex flex-col gap-4 mt-4">
-          <div class="flex justify-between items-center">
-            <h1 class="text-accent-1 font-medium text-lg">Nodes List</h1>
+          <h1 class="text-accent-1 font-medium text-lg">Nodes List</h1>
+          <div class="flex justify-between items-end">
+            <div class="w-fit">
+              <SearchBar class="outlined" v-model="searchValue" placeholder="Search by SN, alias ..." />
+            </div>
             <div class="flex items-center gap-2">
               <p class="text-label-primary text-sm">Total Connected Nodes:</p>
-              <p class="font-semibold text-lg">{{ gatewayNodes.length }}</p>
+              <p v-if="!getGatewayNodesLoading" class="font-semibold text-lg">{{ gatewayNodes.length }}</p>
             </div>
           </div>
-          <div class="w-fit">
-            <SearchBar class="outlined" v-model="searchValue" placeholder="Search by SN, alias ..." />
-          </div>
           <EasyDataTable :search-value="searchValue" :rows-per-page="10" table-class-name="customize-table" :headers="nodeListHeader"
-            :items="gatewayNodes" theme-color="#1363df">
+            :items="gatewayNodes" theme-color="#1363df" :loading="getGatewayNodesLoading">
             <template #item-group="item">
               <div class="flex gap-4 py-2">
                 <div class="rounded-full px-4 py-2 bg-accent-1" v-for="(value, key) in item.group">

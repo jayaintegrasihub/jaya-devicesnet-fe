@@ -18,11 +18,11 @@ const props = defineProps({
 
 // Function to convert dBm to signal bars (0 to 5)
 function dbmToBars(dbm) {
-  if (dbm >= -50) return 5;
-  else if (dbm >= -60) return 4;
-  else if (dbm >= -70) return 3;
-  else if (dbm >= -80) return 2;
-  else if (dbm >= -90) return 1;
+  if (dbm >= -5) return 5;
+  else if (dbm >= -10) return 4;
+  else if (dbm >= -20) return 3;
+  else if (dbm >= -30) return 2;
+  else if (dbm >= -40) return 1;
   else return 0;
 }
 

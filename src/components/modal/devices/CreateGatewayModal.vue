@@ -170,7 +170,6 @@ const onSubmit = async (values, { resetForm }) => {
     }
     registerLabel.value = 'REGISTER'
     regButtonClick.value = 0
-    emits('close')
     await delay(1000)
     gatewaysStore.getGateways()
   }

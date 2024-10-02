@@ -4,6 +4,13 @@ import { ref } from 'vue'
 import moment from 'moment'
 import { createStatusDeviceEventSource, createDeviceDetailsEventSource } from '@/services/sse'
 
+const getDateNdaysAgo = (n) => {
+  const date = new Date();
+  date.setDate(date.getDate() - n);
+  return date.toLocaleDateString('en-CA'); 
+}
+
+
 function rssiToDbm(rssi) {
   const minDbm = -100;
   const maxDbm = 0;
@@ -50,6 +57,7 @@ function convertToArray(data) {
 
 export const useTelemetryStore = defineStore('Telemetry', {
   state: () => ({
+    yesterdayDataCompleteness: ref(),
     dataTags: ref([]),
     isNoDevices: ref(false),
     isNoGateways: ref(false),
@@ -71,6 +79,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
     gatewaysData: ref([]),
     nodesData: ref([]),
     telemetryData: ref([]),
+    telemetryDataCompleteness: ref([]),
     offlineNodesList: ref([]),
     offlineGatewaysList: ref([]),
     getTelemetryDetailStatus: ref({
@@ -83,8 +92,14 @@ export const useTelemetryStore = defineStore('Telemetry', {
       message: null,
       code: null,
     }),
+    getTelemetryCompletenessStatus: ref({
+      isError: null,
+      message: null,
+      code: null,
+    }),
     getTelemetryDetailLoading: ref(false),
     getTelemetryHistoryLoading: ref(false),
+    getTelemetryCompletenessLoading: ref(false),
     eventSource: null,
     telemetryDetailEventSource: null,
     eventData: ref(),
@@ -103,12 +118,11 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.statusDeviceDetail.temperature = this.statusDeviceDetail.temperature.toFixed(1)
         this.statusDeviceDetail.uptime = formatUptime(this.statusDeviceDetail.uptime)
         this.statusDeviceDetail.rssi = Math.floor(rssiToDbm(this.statusDeviceDetail.rssi))
-
+        
         this.deviceDataLogs = convertToArray(res.data.telemetry)
         this.deviceDataLogs.map((data) => {
           data.timestamp = new Date(data.timestamp).toLocaleString()
         })
-
         this.getTelemetryDetailLoading = false
         this.getTelemetryDetailStatus.code = res.status
         this.getTelemetryDetailStatus.message = 'Data Fetched'
@@ -123,10 +137,10 @@ export const useTelemetryStore = defineStore('Telemetry', {
       }
     },
 
-    async getTelemetryHistory(sn,params) {
+    async getTelemetryHistory(sn, params) {
       this.getTelemetryHistoryLoading = true
       try {
-        const res = await telemetryAPI.getTelemetryHistory(sn,params)
+        const res = await telemetryAPI.getTelemetryHistory(sn, params)
         console.log(res)
         this.telemetryData = Object.values(res.data.telemetries)[0]
         console.log(this.telemetryData)
@@ -147,8 +161,52 @@ export const useTelemetryStore = defineStore('Telemetry', {
         return err
       }
     },
+    async getTelemetryCompleteness(sn, params) {
+      this.getTelemetryCompletenessLoading = true
+      try {
+        const res = await telemetryAPI.getTelemetryCompleteness(sn, params)
+        console.log(res)
+        // this.telemetryData = Object.values(res.data.telemetries)[0]
+        // console.log(this.telemetryData)
+        // this.telemetryData.map((data) => {
+        //   data._time = moment(data._time).format('MM/DD/YYYY , HH:mm:ss')
+        // })
 
-
+        this.getTelemetryCompletenessLoading = false
+        this.getTelemetryCompletenessStatus.code = res.status
+        this.getTelemetryCompletenessStatus.message = 'Data Fetched'
+        this.getTelemetryCompletenessStatus.isError = false
+      } catch (err) {
+        console.error(err)
+        this.getTelemetryCompletenessLoading = false
+        this.getTelemetryCompletenessStatus.code = err.response.data.status
+        this.getTelemetryCompletenessStatus.message = JSON.stringify(err.response.data.data)
+        this.getTelemetryCompletenessStatus.isError = true
+        return err
+      }
+    },
+    async getYesterdayDataCompleteness(sn) {
+      this.getYesterdayDataCompletenessLoading = true
+      const queryParams = {}
+      queryParams.startTime = getDateNdaysAgo(1)
+      queryParams.endTime = new Date().toLocaleDateString('en-CA')
+      try {
+        const res = await telemetryAPI.getTelemetryCompleteness(sn, queryParams)
+        this.yesterdayDataCompleteness = res.data.completeness.dataCount
+        console.log(this.yesterdayDataCompleteness)
+        this.getYesterdayDataCompletenessLoading = false
+        // this.getTelemetryCompletenessStatus.code = res.status
+        // this.getTelemetryCompletenessStatus.message = 'Data Fetched'
+        // this.getTelemetryCompletenessStatus.isError = false
+      } catch (err) {
+        console.error(err)
+        this.getYesterdayDataCompletenessLoading = false
+        // this.getTelemetryCompletenessStatus.code = err.response.data.status
+        // this.getTelemetryCompletenessStatus.message = JSON.stringify(err.response.data.data)
+        // this.getTelemetryCompletenessStatus.isError = true
+        return err
+      }
+    },
     async listenTelemetryDetail(serialNumber) {
       this.getTelemetryDetailLoading = true
       this.telemetryDetailEventSource = createDeviceDetailsEventSource(serialNumber)
@@ -164,6 +222,8 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.deviceDataLogs.map((data) => {
           data.timestamp = new Date(data.timestamp).toLocaleString()
         })
+        console.log(this.deviceDataLogs)
+
         this.dataTags = Object.keys(this.detailEventData.telemetry)
       }
     },
@@ -219,12 +279,12 @@ export const useTelemetryStore = defineStore('Telemetry', {
           data.rssi = Math.floor(rssiToDbm(data.rssi))
         })
 
-        if (this.totalGateways === 0 ) {
+        if (this.totalGateways === 0) {
           this.isNoGateways = true
         } else {
           this.isNoGateways = false
         }
-        if (this.totalNodes === 0 ) {
+        if (this.totalNodes === 0) {
           this.isNoNodes = true
         } else {
           this.isNoNodes = false

@@ -6,5 +6,8 @@ export default {
   },
   getTelemetryHistory(sn,params) {
     return apiClient.get(`telemetry/history/${sn}`, {params})
+  },
+  getTelemetryCompleteness(sn,params) {
+    return apiClient.get(`telemetry/completeness/${sn}`, {params})
   }
 }

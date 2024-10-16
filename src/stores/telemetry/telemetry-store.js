@@ -7,7 +7,7 @@ import { createStatusDeviceEventSource, createDeviceDetailsEventSource } from '@
 const getDateNdaysAgo = (n) => {
   const date = new Date();
   date.setDate(date.getDate() - n);
-  return date.toLocaleDateString('en-CA'); 
+  return date.toLocaleDateString('en-CA');
 }
 
 
@@ -110,6 +110,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
   actions: {
     async getTelemetryDetail(serialNumber) {
       this.getTelemetryDetailLoading = true
+      this.deviceDataLogs = ''
       try {
         const res = await telemetryAPI.getTelemetryDetail(serialNumber)
         this.statusDeviceDetail = res.data.statusDevice
@@ -118,7 +119,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.statusDeviceDetail.temperature = this.statusDeviceDetail.temperature.toFixed(1)
         this.statusDeviceDetail.uptime = formatUptime(this.statusDeviceDetail.uptime)
         this.statusDeviceDetail.rssi = Math.floor(rssiToDbm(this.statusDeviceDetail.rssi))
-        
+
         this.deviceDataLogs = convertToArray(res.data.telemetry)
         this.deviceDataLogs.map((data) => {
           data.timestamp = new Date(data.timestamp).toLocaleString()
@@ -188,8 +189,11 @@ export const useTelemetryStore = defineStore('Telemetry', {
     async getYesterdayDataCompleteness(sn) {
       this.getYesterdayDataCompletenessLoading = true
       const queryParams = {}
+      this.yesterdayDataCompleteness = null
       queryParams.startTime = getDateNdaysAgo(1)
       queryParams.endTime = new Date().toLocaleDateString('en-CA')
+      queryParams.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      console.log(queryParams)
       try {
         const res = await telemetryAPI.getTelemetryCompleteness(sn, queryParams)
         this.yesterdayDataCompleteness = res.data.completeness.dataCount

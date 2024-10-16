@@ -260,6 +260,15 @@ async function loadHistoricalData() {
                     <p class="text-label-primary font-medium">{{ statusDeviceDetail.temperature }} °C</p>
                   </div>
                 </div>
+                <div class="flex flex-col gap-3 text-sm">
+                  <p class="text-label-primary">
+                    Module 1
+                  </p>
+                  <div class="flex gap-3 items-center">
+                    <img alt="telemetric logo" src="../assets/module-icon.svg" width="20" height="20" />
+                    <p class="text-label-primary font-medium">{{ statusDeviceDetail.module1 }}</p>
+                  </div>
+                </div>
               </div>
               <div class="flex flex-col gap-8">
                 <div class="flex flex-col gap-3 text-sm">
@@ -277,13 +286,23 @@ async function loadHistoricalData() {
                     <p class="text-label-primary font-medium">{{ statusDeviceDetail.humidity }} %</p>
                   </div>
                 </div>
+                <div class="flex flex-col gap-3 text-sm">
+                  <p class="text-label-primary">
+                    Module 2
+                  </p>
+                  <div class="flex gap-3 items-center">
+                    <img alt="telemetric logo" src="../assets/module-icon.svg" width="20" height="20" />
+                    <p class="text-label-primary font-medium">{{ statusDeviceDetail.module2 }}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
           <div class="flex flex-col gap-6">
             <h1 class="text-accent-1 font-medium text-lg">Data Logs</h1>
             <EasyDataTable fixed-header table-class-name="customize-table table-scroll" :headers="header"
-              :items="deviceDataLogs" hide-footer theme-color="#1363df" :loading="telemeryLoading" sort-by="timestamp" >
+              :items="deviceDataLogs" hide-footer theme-color="#1363df" :loading="telemeryLoading" sort-by="timestamp" 
+              sort-type="desc" >
             </EasyDataTable>
           </div>
         </div>

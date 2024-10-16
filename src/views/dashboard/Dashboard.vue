@@ -980,6 +980,7 @@ async function showOfflineNodeDetail(id) {
                     </button>
                   </div>
                 </div>
+                <!-- nodes -->
                 <div :class="selectedNodesView === 'card' ? '' : 'hidden'">
                   <div v-if="nodesGroupBy.length === 0"
                     class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 max-h-[800px] overflow-y-scroll overflow-x-visible min-h-[200px]-[200px] pb-2">
@@ -1025,6 +1026,10 @@ async function showOfflineNodeDetail(id) {
                               <p class="text-label-primary font-medium opacity-80">Temperature:</p>
                               <p class="text-label-primary font-semibold opacity-90">{{ data.temperature }}°C</p>
                             </div>
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                              <p class="text-label-primary font-medium opacity-80">Module 1:</p>
+                              <p class="text-label-primary font-semibold opacity-90">{{ data.module1 }}</p>
+                            </div>
                           </div>
                           <div class="flex flex-col gap-1">
                             <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
@@ -1046,6 +1051,10 @@ async function showOfflineNodeDetail(id) {
                             <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
                               <p class="text-label-primary font-medium opacity-80">Uptime:</p>
                               <p class="text-label-primary font-semibold opacity-90">{{ data.uptime }}</p>
+                            </div>
+                            <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                              <p class="text-label-primary font-medium opacity-80">Module 2:</p>
+                              <p class="text-label-primary font-semibold opacity-90">{{ data.module2 }}</p>
                             </div>
                           </div>
                         </div>

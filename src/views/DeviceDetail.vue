@@ -1,26 +1,35 @@
 <script setup>
-import { onMounted,onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import IconButton from '@/components/input/IconButton.vue'
 import BaseIndicator from '@/components/indicator/BaseIndicator.vue'
 import { storeToRefs } from 'pinia'
 import router from '@/router'
 import { useTelemetryStore } from '@/stores/telemetry/telemetry-store'
+import { useLocalStorage } from '@vueuse/core'
+import BaseButton from '@/components/input/BaseButton.vue'
 
 const telemetryStore = useTelemetryStore()
-const { getTelemetryDetailLoading, statusDeviceDetail, deviceDataLogs } = storeToRefs(useTelemetryStore())
+const { yesterdayDataCompleteness, getTelemetryDetailLoading, telemetryDataCompleteness, getTelemetryCompletenessLoading, telemetryData, getTelemetryHistoryLoading, statusDeviceDetail, deviceDataLogs, dataTags } = storeToRefs(useTelemetryStore())
 const props = defineProps(['id'])
 
 function goBack() {
   router.go(-1)
 }
+const telemeryLoading = ref(false)
 
 onMounted(async () => {
-  telemetryStore.listenTelemetryDetail(props.id)
+  window.scrollTo(0, 0)
+  telemeryLoading.value = true
+  await telemetryStore.getYesterdayDataCompleteness(props.id)
+  await telemetryStore.listenTelemetryDetail(props.id)
+  telemeryLoading.value = false
+  loadHistoricalData()
 })
 
 onUnmounted(() => {
   telemetryStore.stopListenTelemetryDetail()
 })
+
 
 
 //table
@@ -29,8 +38,46 @@ const header = [
   { text: "Tag", value: "tag", sortable: true },
   { text: "Value", value: "value", sortable: true },
 ]
+const historyHeader = [
+  { text: "Timestamp", value: "_time", sortable: true },
+  { text: "Value", value: "_value", sortable: true },
+]
 
-const items = []
+
+const selectedTag = useLocalStorage('selectedTag', '0')
+
+const getDateNdaysAgo = (n) => {
+  const date = new Date()
+  date.setDate(date.getDate() - n)
+  return date.toLocaleDateString('en-CA')
+}
+const startDate = ref(getDateNdaysAgo(7))
+const startTime = ref(new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }))
+const endDate = ref(new Date().toLocaleDateString('en-CA'))
+const endTime = ref(new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }))
+
+
+const getYesterday = () => {
+  const date = new Date();
+  date.setDate(date.getDate() - 1);
+  return date.toLocaleDateString('en-CA');
+}
+
+let yesterdayDate = getYesterday()
+
+
+
+
+async function loadHistoricalData() {
+  const queryParams = {}
+
+  if (selectedTag.value !== '0') {
+    queryParams.fields = selectedTag.value
+    queryParams.startTime = new Date(startDate.value + 'T' + startTime.value).toISOString()
+    queryParams.endTime = new Date(endDate.value + 'T' + endTime.value).toISOString()
+    await telemetryStore.getTelemetryHistory(props.id, queryParams)
+  }
+}
 
 </script>
 <template>
@@ -99,6 +146,98 @@ const items = []
           </div>
         </div>
       </div>
+
+      <div
+        class="flex-1 mx-[20px] mt-[20px] flex h-[3000px] p-8 bg-bkg-primary rounded-[10px] shadow border border-bkg-secondary flex-col gap-5">
+        <div class="flex flex-col gap-6">
+          <h1 class="text-accent-1 font-medium text-lg">Data Analytics</h1>
+          <div class="flex flex-col gap-4">
+            <div class="flex flex-col">
+              <p class="font-semibold">Telemetry Data Completeness Daily</p>
+              <p class="text-xs text-label-secondary"> {{ yesterdayDate }} to {{ endDate }}</p>
+            </div>
+            <div class="flex flex-wrap gap-4">
+              <div v-for="(key, value) in yesterdayDataCompleteness"
+                class="px-4 py-3 bg-bkg-secondary w-fit flex flex-col gap-1">
+                <p class="text-sm font-medium text-accent-1 mb-3">
+                  {{ value }}
+                </p>
+                <p class="font-medium">
+                  {{ key[0].count }} / <span class="">
+                    {{ 8640 }}
+                  </span>
+                </p>
+                <hr>
+                <p class="text-end text-accent-1 text-sm w-full font-medium">
+                  {{ Math.round(key[0].count / 8640 * 100) }}%
+                </p>
+              </div>
+            </div>
+          </div>
+          <hr>
+          <div class="flex flex-col gap-4">
+            <div class="flex justify-between">
+              <p class="font-semibold">Telemetry Data Completeness History</p>
+              <div class="flex items-center">
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit">
+                    <h2 class="font-semibold text-xs">From</h2>
+                    <div class="flex gap-6 ">
+                      <input class="cursor-pointer outline-none bg-transparent text-xs" type="date" name="startDate"
+                        id="startDate" v-model="startDate">
+                      <input class="cursor-pointer outline-none bg-transparent text-xs" type="time" name="startTime"
+                        id="startTime" v-model="startTime">
+                    </div>
+                  </div>
+                  <div class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit">
+                    <h2 class="font-semibold text-xs">To</h2>
+                    <div class="flex gap-6">
+                      <input class="cursor-pointer outline-none bg-transparent text-xs" type="date" name="endDate"
+                        id="endDate" v-model="endDate">
+                      <input class="cursor-pointer outline-none bg-transparent text-xs" type="time" name="endTime"
+                        id="endTime" v-model="endTime">
+                    </div>
+                  </div>
+                </div>
+                <div class="w-fit">
+                  <BaseButton type="submit" class="primary" label="Filter" :loading="getTelemetryHistoryLoading"
+                    @click="loadHistoricalData()" />
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-wrap gap-4">
+              <div v-for="(key, value) in yesterdayDataCompleteness"
+                class="px-4 py-3 bg-bkg-secondary w-fit flex flex-col gap-1">
+                <p class="text-sm font-medium text-accent-1 mb-3">
+                  {{ value }}
+                </p>
+                <p class="font-medium">
+                  {{ key[0].count }} / <span class="">
+                    {{ 8640 }}
+                  </span>
+                </p>
+                <hr>
+                <p class="text-end text-accent-1 text-sm w-full font-medium">
+                  {{ Math.round(key[0].count / 8640 * 100) }}%
+                </p>
+              </div>
+            </div>
+          </div>
+          <!-- <div class="flex justify-between">
+            <div class="custom-select">
+              <select class="custom-select-option" name="type" id="type" v-model="selectedTag">
+                <option value="0" class="text-label-tertiary" disabled selected>Data Tag</option>
+                <option v-for="data in dataTags" :value="data">{{ data }}</option>
+              </select>
+            </div>
+            
+          </div> -->
+
+          <!-- <EasyDataTable :rows-per-page="10" table-class-name="customize-table" :headers="header" :items="telemetryData"
+            theme-color="#1363df" :loading="getTelemetryHistoryLoading"></EasyDataTable> -->
+        </div>
+      </div>
       <div
         class="flex-1 m-[20px] flex h-[3000px] p-8 bg-bkg-primary rounded-[10px] shadow border border-bkg-secondary flex-col gap-5">
         <div class="grid grid-cols-2">
@@ -121,6 +260,15 @@ const items = []
                     <p class="text-label-primary font-medium">{{ statusDeviceDetail.temperature }} °C</p>
                   </div>
                 </div>
+                <div class="flex flex-col gap-3 text-sm">
+                  <p class="text-label-primary">
+                    Module 1
+                  </p>
+                  <div class="flex gap-3 items-center">
+                    <img alt="telemetric logo" src="../assets/module-icon.svg" width="20" height="20" />
+                    <p class="text-label-primary font-medium">{{ statusDeviceDetail.module1 }}</p>
+                  </div>
+                </div>
               </div>
               <div class="flex flex-col gap-8">
                 <div class="flex flex-col gap-3 text-sm">
@@ -138,21 +286,66 @@ const items = []
                     <p class="text-label-primary font-medium">{{ statusDeviceDetail.humidity }} %</p>
                   </div>
                 </div>
+                <div class="flex flex-col gap-3 text-sm">
+                  <p class="text-label-primary">
+                    Module 2
+                  </p>
+                  <div class="flex gap-3 items-center">
+                    <img alt="telemetric logo" src="../assets/module-icon.svg" width="20" height="20" />
+                    <p class="text-label-primary font-medium">{{ statusDeviceDetail.module2 }}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
           <div class="flex flex-col gap-6">
             <h1 class="text-accent-1 font-medium text-lg">Data Logs</h1>
             <EasyDataTable fixed-header table-class-name="customize-table table-scroll" :headers="header"
-              :items="deviceDataLogs" hide-footer theme-color="#1363df">
+              :items="deviceDataLogs" hide-footer theme-color="#1363df" :loading="telemeryLoading" sort-by="timestamp" 
+              sort-type="desc" >
             </EasyDataTable>
           </div>
         </div>
 
         <div class="flex flex-col gap-6">
-          <h1 class="text-accent-1 font-medium text-lg">Changelog</h1>
-          <EasyDataTable :rows-per-page="10" table-class-name="customize-table table-scroll" :headers="header"
-            :items="items" theme-color="#1363df"></EasyDataTable>
+          <h1 class="text-accent-1 font-medium text-lg">Historical Data</h1>
+          <div class="flex justify-between">
+            <div class="custom-select">
+              <select class="custom-select-option" name="type" id="type" v-model="selectedTag">
+                <option value="0" class="text-label-tertiary" disabled selected>Data Tag</option>
+                <option v-for="data in dataTags" :value="data">{{ data }}</option>
+              </select>
+            </div>
+            <div class="flex items-center">
+              <div class="grid grid-cols-2 gap-4">
+                <div class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit">
+                  <h2 class="font-semibold text-xs">From</h2>
+                  <div class="flex gap-6 ">
+                    <input class="cursor-pointer outline-none bg-transparent text-xs" type="date" name="startDate"
+                      id="startDate" v-model="startDate">
+                    <input class="cursor-pointer outline-none bg-transparent text-xs" type="time" name="startTime"
+                      id="startTime" v-model="startTime">
+                  </div>
+                </div>
+                <div class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit">
+                  <h2 class="font-semibold text-xs">To</h2>
+                  <div class="flex gap-6">
+                    <input class="cursor-pointer outline-none bg-transparent text-xs" type="date" name="endDate"
+                      id="endDate" v-model="endDate">
+                    <input class="cursor-pointer outline-none bg-transparent text-xs" type="time" name="endTime"
+                      id="endTime" v-model="endTime">
+                  </div>
+                </div>
+              </div>
+              <div class="w-fit">
+                <BaseButton type="submit" class="primary" label="Filter" :loading="getTelemetryHistoryLoading"
+                  @click="loadHistoricalData()" />
+              </div>
+            </div>
+          </div>
+
+          <EasyDataTable :rows-per-page="10" table-class-name="customize-table" :headers="historyHeader" :items="telemetryData"
+            theme-color="#1363df" :loading="getTelemetryHistoryLoading"></EasyDataTable>
         </div>
       </div>
     </div>
@@ -184,5 +377,28 @@ const items = []
 ::-webkit-scrollbar-thumb {
   background-color: #C8C8C8;
   border-radius: 10px;
+}
+
+
+.custom-select-option {
+  @apply outline-none text-[8px] md:text-[10px] text-label-secondary pb-[6px] px-2 rounded-lg cursor-pointer md:min-w-[200px]
+}
+
+.custom-select-option option {
+  @apply p-2 cursor-pointer
+}
+
+
+.custom-select {
+  @apply w-fit hover:bg-bkg-secondary border border-label-tertiary rounded-lg pt-[6px] px-2
+}
+
+.custom-select select {
+  font-size: 14px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><path fill="%23999" d="M10 12l-5-5h10l-5 5z"/></svg>') no-repeat right 1px center;
+  @apply w-full cursor-pointer focus:outline-none text-label-primary
 }
 </style>

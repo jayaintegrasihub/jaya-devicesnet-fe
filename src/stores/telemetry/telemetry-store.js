@@ -4,6 +4,13 @@ import { ref } from 'vue'
 import moment from 'moment'
 import { createStatusDeviceEventSource, createDeviceDetailsEventSource } from '@/services/sse'
 
+const getDateNdaysAgo = (n) => {
+  const date = new Date();
+  date.setDate(date.getDate() - n);
+  return date.toLocaleDateString('en-CA');
+}
+
+
 function rssiToDbm(rssi) {
   const minDbm = -100;
   const maxDbm = 0;
@@ -50,6 +57,8 @@ function convertToArray(data) {
 
 export const useTelemetryStore = defineStore('Telemetry', {
   state: () => ({
+    yesterdayDataCompleteness: ref(),
+    dataTags: ref([]),
     isNoDevices: ref(false),
     isNoGateways: ref(false),
     isNoNodes: ref(false),
@@ -70,6 +79,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
     gatewaysData: ref([]),
     nodesData: ref([]),
     telemetryData: ref([]),
+    telemetryDataCompleteness: ref([]),
     offlineNodesList: ref([]),
     offlineGatewaysList: ref([]),
     getTelemetryDetailStatus: ref({
@@ -77,7 +87,19 @@ export const useTelemetryStore = defineStore('Telemetry', {
       message: null,
       code: null,
     }),
+    getTelemetryHistoryStatus: ref({
+      isError: null,
+      message: null,
+      code: null,
+    }),
+    getTelemetryCompletenessStatus: ref({
+      isError: null,
+      message: null,
+      code: null,
+    }),
     getTelemetryDetailLoading: ref(false),
+    getTelemetryHistoryLoading: ref(false),
+    getTelemetryCompletenessLoading: ref(false),
     eventSource: null,
     telemetryDetailEventSource: null,
     eventData: ref(),
@@ -88,6 +110,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
   actions: {
     async getTelemetryDetail(serialNumber) {
       this.getTelemetryDetailLoading = true
+      this.deviceDataLogs = ''
       try {
         const res = await telemetryAPI.getTelemetryDetail(serialNumber)
         this.statusDeviceDetail = res.data.statusDevice
@@ -101,7 +124,6 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.deviceDataLogs.map((data) => {
           data.timestamp = new Date(data.timestamp).toLocaleString()
         })
-        console.log(this.deviceDataLogs)
         this.getTelemetryDetailLoading = false
         this.getTelemetryDetailStatus.code = res.status
         this.getTelemetryDetailStatus.message = 'Data Fetched'
@@ -115,12 +137,85 @@ export const useTelemetryStore = defineStore('Telemetry', {
         return err
       }
     },
-    listenTelemetryDetail(serialNumber) {
+
+    async getTelemetryHistory(sn, params) {
+      this.getTelemetryHistoryLoading = true
+      try {
+        const res = await telemetryAPI.getTelemetryHistory(sn, params)
+        console.log(res)
+        this.telemetryData = Object.values(res.data.telemetries)[0]
+        console.log(this.telemetryData)
+        this.telemetryData.map((data) => {
+          data._time = moment(data._time).format('MM/DD/YYYY , HH:mm:ss')
+        })
+
+        this.getTelemetryHistoryLoading = false
+        this.getTelemetryHistoryStatus.code = res.status
+        this.getTelemetryHistoryStatus.message = 'Data Fetched'
+        this.getTelemetryHistoryStatus.isError = false
+      } catch (err) {
+        console.error(err)
+        this.getTelemetryHistoryLoading = false
+        this.getTelemetryHistoryStatus.code = err.response.data.status
+        this.getTelemetryHistoryStatus.message = JSON.stringify(err.response.data.data)
+        this.getTelemetryHistoryStatus.isError = true
+        return err
+      }
+    },
+    async getTelemetryCompleteness(sn, params) {
+      this.getTelemetryCompletenessLoading = true
+      try {
+        const res = await telemetryAPI.getTelemetryCompleteness(sn, params)
+        console.log(res)
+        // this.telemetryData = Object.values(res.data.telemetries)[0]
+        // console.log(this.telemetryData)
+        // this.telemetryData.map((data) => {
+        //   data._time = moment(data._time).format('MM/DD/YYYY , HH:mm:ss')
+        // })
+
+        this.getTelemetryCompletenessLoading = false
+        this.getTelemetryCompletenessStatus.code = res.status
+        this.getTelemetryCompletenessStatus.message = 'Data Fetched'
+        this.getTelemetryCompletenessStatus.isError = false
+      } catch (err) {
+        console.error(err)
+        this.getTelemetryCompletenessLoading = false
+        this.getTelemetryCompletenessStatus.code = err.response.data.status
+        this.getTelemetryCompletenessStatus.message = JSON.stringify(err.response.data.data)
+        this.getTelemetryCompletenessStatus.isError = true
+        return err
+      }
+    },
+    async getYesterdayDataCompleteness(sn) {
+      this.getYesterdayDataCompletenessLoading = true
+      const queryParams = {}
+      this.yesterdayDataCompleteness = null
+      queryParams.startTime = getDateNdaysAgo(1)
+      queryParams.endTime = new Date().toLocaleDateString('en-CA')
+      queryParams.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      console.log(queryParams)
+      try {
+        const res = await telemetryAPI.getTelemetryCompleteness(sn, queryParams)
+        this.yesterdayDataCompleteness = res.data.completeness.dataCount
+        console.log(this.yesterdayDataCompleteness)
+        this.getYesterdayDataCompletenessLoading = false
+        // this.getTelemetryCompletenessStatus.code = res.status
+        // this.getTelemetryCompletenessStatus.message = 'Data Fetched'
+        // this.getTelemetryCompletenessStatus.isError = false
+      } catch (err) {
+        console.error(err)
+        this.getYesterdayDataCompletenessLoading = false
+        // this.getTelemetryCompletenessStatus.code = err.response.data.status
+        // this.getTelemetryCompletenessStatus.message = JSON.stringify(err.response.data.data)
+        // this.getTelemetryCompletenessStatus.isError = true
+        return err
+      }
+    },
+    async listenTelemetryDetail(serialNumber) {
       this.getTelemetryDetailLoading = true
       this.telemetryDetailEventSource = createDeviceDetailsEventSource(serialNumber)
       this.telemetryDetailEventSource.onmessage = (event) => {
         this.detailEventData = JSON.parse(event.data).data.telemetry
-        console.log(this.detailEventData)
         this.statusDeviceDetail = this.detailEventData.statusDevice
         this.statusDeviceDetail._time = new Date(this.statusDeviceDetail._time).toLocaleString()
         this.statusDeviceDetail.humidity = this.statusDeviceDetail.humidity.toFixed(1)
@@ -131,6 +226,9 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.deviceDataLogs.map((data) => {
           data.timestamp = new Date(data.timestamp).toLocaleString()
         })
+        console.log(this.deviceDataLogs)
+
+        this.dataTags = Object.keys(this.detailEventData.telemetry)
       }
     },
     stopListenTelemetryDetail() {
@@ -143,7 +241,6 @@ export const useTelemetryStore = defineStore('Telemetry', {
       this.eventSource = createStatusDeviceEventSource(tenant, type)
       this.eventSource.onmessage = (event) => {
         this.eventData = JSON.parse(event.data).data
-        console.log(this.eventData)
         let gateways = this.eventData.statusDevices.gateways
         let onlineGatewaysList = gateways.filter((data) => data.status === 'ONLINE')
         this.offlineGatewaysList = gateways.filter((data) => data.status === 'OFFLINE')
@@ -166,10 +263,8 @@ export const useTelemetryStore = defineStore('Telemetry', {
           data._time = new Date(data._time).toLocaleString()
         })
         this.lastUpdated = new Date(this.eventData.statusDevices.timeNow).toLocaleString()
-        console.log(this.offlineNodesList)
         this.gatewaysData = gateways
         this.gatewaysData.map((data) => {
-          console.log(Math.floor((new Date() - new Date(data._time)) / 1000))
           data.lastHeard = formatUptime(Math.floor((new Date() - new Date(data._time)) / 1000))
           data._time = moment(data._time).format('MM/DD/YYYY , HH:mm')
           data.humidity = data.humidity.toFixed(1)
@@ -188,12 +283,12 @@ export const useTelemetryStore = defineStore('Telemetry', {
           data.rssi = Math.floor(rssiToDbm(data.rssi))
         })
 
-        if (this.totalGateways === 0 ) {
+        if (this.totalGateways === 0) {
           this.isNoGateways = true
         } else {
           this.isNoGateways = false
         }
-        if (this.totalNodes === 0 ) {
+        if (this.totalNodes === 0) {
           this.isNoNodes = true
         } else {
           this.isNoNodes = false
@@ -213,5 +308,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.eventSource = null
       }
     },
+
+
   }
 })

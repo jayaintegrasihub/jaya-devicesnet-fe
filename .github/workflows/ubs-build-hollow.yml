@@ -2,7 +2,7 @@ name: Jaya Devicesnet FE Deployment
 
 on:
   push:
-    branches: [ "ubs-build" ]
+    branches: [ "ubs-build-hollow" ]
 
 jobs:
 

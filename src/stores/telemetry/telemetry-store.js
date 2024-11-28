@@ -142,9 +142,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
       this.getTelemetryHistoryLoading = true
       try {
         const res = await telemetryAPI.getTelemetryHistory(sn, params)
-        console.log(res)
         this.telemetryData = Object.values(res.data.telemetries)[0]
-        console.log(this.telemetryData)
         this.telemetryData.map((data) => {
           data._time = moment(data._time).format('MM/DD/YYYY , HH:mm:ss')
         })
@@ -193,7 +191,6 @@ export const useTelemetryStore = defineStore('Telemetry', {
       queryParams.startTime = getDateNdaysAgo(1)
       queryParams.endTime = new Date().toLocaleDateString('en-CA')
       queryParams.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      console.log(queryParams)
       try {
         const res = await telemetryAPI.getTelemetryCompleteness(sn, queryParams)
         this.yesterdayDataCompleteness = res.data.completeness.dataCount
@@ -226,8 +223,6 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.deviceDataLogs.map((data) => {
           data.timestamp = new Date(data.timestamp).toLocaleString()
         })
-        console.log(this.deviceDataLogs)
-
         this.dataTags = Object.keys(this.detailEventData.telemetry)
       }
     },
@@ -275,12 +270,27 @@ export const useTelemetryStore = defineStore('Telemetry', {
 
         this.nodesData = nodes
         this.nodesData.map((data) => {
-          data._time = moment(data._time).format('MM/DD/YYYY , HH:mm')
+          console.log('b',data._time)
+
+          let parsedTime
+
+          if (moment(data._time, 'MM/DD/YYYY, h:mm:ss A', true).isValid()) {
+            parsedTime = moment(data._time, 'MM/DD/YYYY, h:mm:ss A').toISOString();
+          }
+          else if (moment(data._time, moment.ISO_8601, true).isValid()) {
+            parsedTime = data._time; // It's already in ISO format
+          } else {
+            console.error(`Invalid date format: ${data._time}`);
+            return; // Skip this entry
+          }
+          data._time = moment(parsedTime).format('MM/DD/YYYY , HH:mm')
           data.lastHeard = formatUptime(Math.floor((new Date() - new Date(data._time)) / 1000))
           data.humidity = data.humidity.toFixed(1)
           data.temperature = data.temperature.toFixed(1)
           data.uptime = formatUptime(data.uptime)
           data.rssi = Math.floor(rssiToDbm(data.rssi))
+
+          console.log('a',data._time)
         })
 
         if (this.totalGateways === 0) {

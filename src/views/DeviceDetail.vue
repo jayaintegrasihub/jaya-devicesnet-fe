@@ -56,6 +56,8 @@ const startTime = ref(new Date().toLocaleTimeString('en-US', { hour12: false, ho
 const endDate = ref(new Date().toLocaleDateString('en-CA'))
 const endTime = ref(new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }))
 
+const dataCompStartDate = ref(getDateNdaysAgo(7))
+const dataCompEndDate = ref(new Date().toLocaleDateString('en-CA'))
 
 const getYesterday = () => {
   const date = new Date();
@@ -78,6 +80,18 @@ async function loadHistoricalData() {
     await telemetryStore.getTelemetryHistory(props.id, queryParams)
   }
 }
+
+
+async function loadDataCompletenessHistory() {
+  const queryParams = {}
+  console.log(dataCompStartDate.value)
+  console.log(dataCompEndDate.value)
+  queryParams.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  queryParams.startTime = dataCompStartDate.value
+  queryParams.endTime = dataCompEndDate.value 
+  await telemetryStore.getTelemetryCompleteness(props.id, queryParams)
+}
+
 
 </script>
 <template>
@@ -184,24 +198,20 @@ async function loadHistoricalData() {
                     <h2 class="font-semibold text-xs">From</h2>
                     <div class="flex gap-6 ">
                       <input class="cursor-pointer outline-none bg-transparent text-xs" type="date" name="startDate"
-                        id="startDate" v-model="startDate">
-                      <input class="cursor-pointer outline-none bg-transparent text-xs" type="time" name="startTime"
-                        id="startTime" v-model="startTime">
+                        id="startDate" v-model="dataCompStartDate">
                     </div>
                   </div>
                   <div class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit">
                     <h2 class="font-semibold text-xs">To</h2>
                     <div class="flex gap-6">
                       <input class="cursor-pointer outline-none bg-transparent text-xs" type="date" name="endDate"
-                        id="endDate" v-model="endDate">
-                      <input class="cursor-pointer outline-none bg-transparent text-xs" type="time" name="endTime"
-                        id="endTime" v-model="endTime">
+                        id="endDate" v-model="dataCompEndDate">
                     </div>
                   </div>
                 </div>
                 <div class="w-fit">
                   <BaseButton type="submit" class="primary" label="Filter" :loading="getTelemetryHistoryLoading"
-                    @click="loadHistoricalData()" />
+                    @click="loadDataCompletenessHistory()" />
                 </div>
               </div>
             </div>
@@ -239,7 +249,7 @@ async function loadHistoricalData() {
         </div>
       </div>
       <div
-        class="flex-1 m-[20px] flex h-[3000px] p-8 bg-bkg-primary rounded-[10px] shadow border border-bkg-secondary flex-col gap-5">
+        class="flex-1 m-[20px] flex h-[3000px] p-8 bg-bkg-primary rounded-[10px] shadow border border-bkg-secondary flex-col gap-14">
         <div class="grid grid-cols-2">
           <div class="flex flex-col gap-6 border-r mr-10">
             <h1 class="text-accent-1 font-medium text-lg">Status</h1>
@@ -301,13 +311,13 @@ async function loadHistoricalData() {
           <div class="flex flex-col gap-6">
             <h1 class="text-accent-1 font-medium text-lg">Data Logs</h1>
             <EasyDataTable fixed-header table-class-name="customize-table table-scroll" :headers="header"
-              :items="deviceDataLogs" hide-footer theme-color="#1363df" :loading="telemeryLoading" sort-by="timestamp" 
-              sort-type="desc" >
+              :items="deviceDataLogs" hide-footer theme-color="#1363df" :loading="telemeryLoading" sort-by="timestamp"
+              sort-type="desc">
             </EasyDataTable>
           </div>
         </div>
 
-        <div class="flex flex-col gap-6">
+        <div class="flex flex-col gap-4">
           <h1 class="text-accent-1 font-medium text-lg">Historical Data</h1>
           <div class="flex justify-between">
             <div class="custom-select">
@@ -344,8 +354,8 @@ async function loadHistoricalData() {
             </div>
           </div>
 
-          <EasyDataTable :rows-per-page="10" table-class-name="customize-table" :headers="historyHeader" :items="telemetryData"
-            theme-color="#1363df" :loading="getTelemetryHistoryLoading"></EasyDataTable>
+          <EasyDataTable :rows-per-page="10" table-class-name="customize-table" :headers="historyHeader"
+            :items="telemetryData" theme-color="#1363df" :loading="getTelemetryHistoryLoading"></EasyDataTable>
         </div>
       </div>
     </div>

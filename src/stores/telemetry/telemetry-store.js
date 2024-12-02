@@ -79,7 +79,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
     gatewaysData: ref([]),
     nodesData: ref([]),
     telemetryData: ref([]),
-    telemetryDataCompleteness: ref([]),
+    telemetryDataCompleteness: ref(),
     offlineNodesList: ref([]),
     offlineGatewaysList: ref([]),
     getTelemetryDetailStatus: ref({
@@ -164,12 +164,8 @@ export const useTelemetryStore = defineStore('Telemetry', {
       this.getTelemetryCompletenessLoading = true
       try {
         const res = await telemetryAPI.getTelemetryCompleteness(sn, params)
-        console.log(res)
-        // this.telemetryData = Object.values(res.data.telemetries)[0]
-        // console.log(this.telemetryData)
-        // this.telemetryData.map((data) => {
-        //   data._time = moment(data._time).format('MM/DD/YYYY , HH:mm:ss')
-        // })
+        console.log(res.data.completeness)
+        this.telemetryDataCompleteness = res.data.completeness
 
         this.getTelemetryCompletenessLoading = false
         this.getTelemetryCompletenessStatus.code = res.status

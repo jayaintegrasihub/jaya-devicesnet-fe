@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, shallowRef } from 'vue'
 import IconButton from '@/components/input/IconButton.vue'
 import BaseIndicator from '@/components/indicator/BaseIndicator.vue'
 import { storeToRefs } from 'pinia'
@@ -7,6 +7,8 @@ import router from '@/router'
 import { useTelemetryStore } from '@/stores/telemetry/telemetry-store'
 import { useLocalStorage } from '@vueuse/core'
 import BaseButton from '@/components/input/BaseButton.vue'
+import { Chart, BarElement, BarController, CategoryScale, Decimation, Filler, Legend, Title, Tooltip, PointElement, LineElement, LinearScale } from 'chart.js';
+Chart.register(BarElement, BarController, CategoryScale, Decimation, Filler, Legend, Title, Tooltip, PointElement, LineElement, LinearScale)
 
 const telemetryStore = useTelemetryStore()
 const { yesterdayDataCompleteness, getTelemetryDetailLoading, telemetryDataCompleteness, getTelemetryCompletenessLoading, telemetryData, getTelemetryHistoryLoading, statusDeviceDetail, deviceDataLogs, dataTags } = storeToRefs(useTelemetryStore())
@@ -17,6 +19,23 @@ function goBack() {
 }
 const telemeryLoading = ref(false)
 
+const Utils = {
+  dates({ startDate, endDate }) {
+    const dates = [];
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    while (start <= end) {
+      dates.push(start.toISOString().split('T')[0]); // Format ke YYYY-MM-DD
+      start.setDate(start.getDate() + 1); // Tambahkan 1 hari
+    }
+
+    return dates;
+  }
+};
+
+const labelDates = ref([])
+
 onMounted(async () => {
   window.scrollTo(0, 0)
   telemeryLoading.value = true
@@ -24,13 +43,13 @@ onMounted(async () => {
   await telemetryStore.listenTelemetryDetail(props.id)
   telemeryLoading.value = false
   loadHistoricalData()
+  renderBarChart()
+
 })
 
 onUnmounted(() => {
   telemetryStore.stopListenTelemetryDetail()
 })
-
-
 
 //table
 const header = [
@@ -67,9 +86,6 @@ const getYesterday = () => {
 
 let yesterdayDate = getYesterday()
 
-
-
-
 async function loadHistoricalData() {
   const queryParams = {}
 
@@ -81,19 +97,99 @@ async function loadHistoricalData() {
   }
 }
 
+function generateColor(label) {
+  // Gunakan hash berdasarkan label untuk menghasilkan warna yang konsisten
+  const hash = [...label].reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const r = (hash * 137) % 255;
+  const g = (hash * 193) % 255;
+  const b = (hash * 251) % 255;
+  return `rgba(${r}, ${g}, ${b}, 0.8)`;
+}
+
 
 async function loadDataCompletenessHistory() {
+  labelDates.value = []
+  historyBarChart.value.data.datasets = []
+
   const queryParams = {}
-  console.log(dataCompStartDate.value)
-  console.log(dataCompEndDate.value)
   queryParams.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   queryParams.startTime = dataCompStartDate.value
   queryParams.endTime = dataCompEndDate.value 
   await telemetryStore.getTelemetryCompleteness(props.id, queryParams)
+
+  const dataHistoryFilter = Object.entries(telemetryDataCompleteness.value.dataCount).map(([key, values]) => ({
+    type: 'bar', 
+    label: key,
+    data: values.map((item) => item.count),
+    backgroundColor: generateColor(key),
+    borderRadius: 4,
+    hidden: true
+  }))
+
+  if(dataHistoryFilter.length === 0){
+    historyBarChart.value.data.datasets = [
+      {
+        type: 'bar', 
+        label: 'Data not found!',
+        data: [],
+        backgroundColor: '#aaaaaa80',
+        borderRadius: 4,
+      }
+    ]
+  }else {
+    historyBarChart.value.data.datasets = dataHistoryFilter
+  }
+
+  labelDates.value = Utils.dates({ startDate: dataCompStartDate.value, endDate: dataCompEndDate.value })
+  historyBarChart.value.data.labels = labelDates.value
+  historyBarChart.value.update()
 }
 
+const historyBarChartCanvas = ref(null)
+let historyBarChart
+
+function renderBarChart() {
+  let historyChartData = {
+    labels: [],
+    datasets: [],
+  }
+
+  const historyChartCtx = historyBarChartCanvas.value.getContext('2d')
+  historyBarChart = shallowRef(new Chart(historyChartCtx, {
+    type: 'bar',
+    data: historyChartData,
+    options: {
+      responsive: true,
+      scales: {
+        y: {
+          ticks: {
+            callback: function (value) {
+              if (Number.isInteger(value)) {
+                return value;
+              }
+              return '';
+            }
+          },
+          beginAtZero: true
+        }
+      }
+    }
+  }))
+}
 
 </script>
+
+<script>
+export default {
+  data() {
+    return {
+      tabs: ['Table', 'Graph'], // Nama tab
+      activeTab: 1 // Tab aktif
+    };
+  },
+};
+</script>
+
 <template>
   <div class="flex relative">
     <SideNav :isDevicesManagementActive="true" />
@@ -243,6 +339,23 @@ async function loadDataCompletenessHistory() {
             </div>
             
           </div> -->
+
+          <div class="bg-[#f7f8fa] w-fit p-1 rounded-lg"> 
+            <button v-for="(tab, index) in tabs" :key="index" @click="activeTab = index" :class="{
+              'border-white text-[#0989c0] bg-white': activeTab === index,
+              'border-transparent text-gray-300': activeTab !== index
+            }" class="px-4 py-2 font-semibold border-b-2 transition duration-300 ease-in-out text-md">
+              {{ tab }}
+            </button>
+          </div>
+
+          <div :style="{ display: activeTab === 0 ? 'block' : 'none' }">
+          </div>
+
+          <div :style="{ display: activeTab === 1 ? 'block' : 'none' }">
+            <canvas ref="historyBarChartCanvas" class="w-full"></canvas>
+          </div>
+
 
           <!-- <EasyDataTable :rows-per-page="10" table-class-name="customize-table" :headers="header" :items="telemetryData"
             theme-color="#1363df" :loading="getTelemetryHistoryLoading"></EasyDataTable> -->

@@ -2,11 +2,13 @@ import { defineStore } from 'pinia'
 import gatewaysAPI from '@/services/master-data/gateways-api'
 import { ref } from 'vue'
 import moment from 'moment'
+import { createGatewayHealthEventSource } from '@/services/gatewayHealth'
 
 export const useGatewaysStore = defineStore('Gateways', {
   state: () => ({
     gateways: ref([]),
     gatewayNodes: ref([]),
+    gatewayHealth: ref({}),
     gateway: ref({}),
     getGatewaysStatus: ref({
       isError: null,
@@ -14,6 +16,11 @@ export const useGatewaysStore = defineStore('Gateways', {
       code: null,
     }),
     getGatewayStatus: ref({
+      isError: null,
+      message: null,
+      code: null,
+    }),
+    getGatewayHealthStatus: ref({
       isError: null,
       message: null,
       code: null,
@@ -43,7 +50,9 @@ export const useGatewaysStore = defineStore('Gateways', {
     editGatewayLoading: ref(false),
     getGatewaysLoading: ref(false),
     getGatewayLoading: ref(false),
-    getGatewayNodesLoading: ref(false)
+    getGatewayHealthLoading: ref(false),
+    getGatewayNodesLoading: ref(false),
+    gatewayHealthEventSource: null
   }),
   actions: {
     async getGateways() {
@@ -89,6 +98,19 @@ export const useGatewaysStore = defineStore('Gateways', {
         this.getGatewayStatus.message = JSON.stringify(err.response.data.data)
         this.getGatewayStatus.isError = true
         return err
+      }
+    },
+    async listenGatewayHealth(id) {
+      this.getGatewayHealthLoading = true
+      this.gatewayHealthEventSource = createGatewayHealthEventSource(id)
+      this.gatewayHealthEventSource.onmessage = (event) => {
+        this.gatewayHealth = JSON.parse(event.data).data.gatewayHealth
+      }
+    },
+    stopListenGatewayHealth() {
+      if (this.gatewayHealthEventSource) {
+        this.gatewayHealthEventSource.close()
+        this.gatewayHealthEventSource = null
       }
     },
     async getGatewayNodes(id) {

@@ -12,7 +12,7 @@ import SearchBar from '@/components/input/SearchBar.vue'
 const telemetryStore = useTelemetryStore()
 const { getTelemetryDetailLoading, statusDeviceDetail, deviceDataLogs } = storeToRefs(useTelemetryStore())
 const gatewayStore = useGatewaysStore()
-const { gatewayNodes, getGatewayNodesLoading } = storeToRefs(useGatewaysStore())
+const { gatewayNodes, getGatewayNodesLoading, gatewayHealth } = storeToRefs(useGatewaysStore())
 
 const props = defineProps(['id'])
 
@@ -22,10 +22,12 @@ function goBack() {
 
 onMounted(async () => {
   // telemetryStore.listenTelemetryDetail(props.id)
+  gatewayStore.listenGatewayHealth(props.id)
   gatewayStore.getGatewayNodes(props.id)
 })
 
 onUnmounted(() => {
+  gatewayStore.stopListenGatewayHealth()
   telemetryStore.stopListenTelemetryDetail()
 })
 
@@ -89,18 +91,18 @@ const items = []
               </div>
               <div class="flex gap-[10px]">
                 <p class="text-label-secondary">Type:</p>
-                <p class="text-text-label-primary">MMA-LE-2</p>
+                <p class="text-text-label-primary">{{ gatewayHealth.model }}</p>
               </div>
             </div>
             <div class="flex col-span-1">
               <div class="flex flex-col col-span-1 justify-between">
                 <div class="flex gap-[10px]">
                   <p class="text-label-secondary">Firmware Version:</p>
-                  <p class="text-text-label-primary">{{ statusDeviceDetail.fwVersion }}</p>
+                  <p class="text-text-label-primary">{{ gatewayHealth.fwVersion }}</p>
                 </div>
                 <div class="flex gap-[10px]">
                   <p class="text-label-secondary">Hardware Version:</p>
-                  <p class="text-text-label-primary">{{ statusDeviceDetail.hwVersion }}</p>
+                  <p class="text-text-label-primary">{{ gatewayHealth.hwVersion }}</p>
                 </div>
               </div>
             </div>
@@ -108,7 +110,7 @@ const items = []
               <div class="flex flex-col col-span-1 justify-between">
                 <div class="flex gap-[10px]">
                   <p class="text-label-secondary">Radio Protocol Version:</p>
-                  <p class="text-text-label-primary">{{ statusDeviceDetail.rdVersion }}</p>
+                  <p class="text-text-label-primary">{{ gatewayHealth.rdVersion }}</p>
                 </div>
               </div>
             </div>
@@ -126,7 +128,7 @@ const items = []
                   <p class="text-label-primary">
                     Last Heard
                   </p>
-                  <p class="text-label-primary font-medium">{{ statusDeviceDetail._time }}</p>
+                  <p class="text-label-primary font-medium">{{ gatewayHealth._time }}</p>
                 </div>
                 <div class="flex flex-col gap-3 text-sm">
                   <p class="text-label-primary">
@@ -134,7 +136,7 @@ const items = []
                   </p>
                   <div class="flex gap-1 items-center">
                     <img alt="telemetric logo" src="../assets/temp-icon.svg" width="32" height="32" />
-                    <p class="text-label-primary font-medium">{{ statusDeviceDetail.temperature }} °C</p>
+                    <p class="text-label-primary font-medium">{{ gatewayHealth.temperature }} °C</p>
                   </div>
                 </div>
               </div>
@@ -143,7 +145,7 @@ const items = []
                   <p class="text-label-primary">
                     Uptime
                   </p>
-                  <p class="text-label-primary font-medium">{{ statusDeviceDetail.uptime }}</p>
+                  <p class="text-label-primary font-medium">{{ gatewayHealth.uptime }}</p>
                 </div>
                 <div class="flex flex-col gap-3 text-sm">
                   <p class="text-label-primary">
@@ -151,17 +153,17 @@ const items = []
                   </p>
                   <div class="flex gap-1 items-center">
                     <img alt="telemetric logo" src="../assets/hum-icon.svg" width="32" height="32" />
-                    <p class="text-label-primary font-medium">{{ statusDeviceDetail.humidity }} %</p>
+                    <p class="text-label-primary font-medium">{{ gatewayHealth.humidity }} %</p>
                   </div>
                 </div>
               </div>
             </div>
           </div>
-          <div class="flex flex-col gap-6">
+          <!-- <div class="flex flex-col gap-6 hidden">
             <h1 class="text-accent-1 font-medium text-lg">Changelog</h1>
             <EasyDataTable :rows-per-page="10" table-class-name="customize-table table-scroll" :headers="header"
               :items="items" theme-color="#1363df"></EasyDataTable>
-          </div>
+          </div> -->
         </div>
 
         <div class="flex flex-col gap-4 mt-4">

@@ -4,6 +4,25 @@ import { ref } from 'vue'
 import moment from 'moment'
 import { createGatewayHealthEventSource } from '@/services/gatewayHealth'
 
+function formatUptime(uptimeInSeconds) {
+  const days = Math.floor(uptimeInSeconds / (3600 * 24));
+  const hours = Math.floor((uptimeInSeconds % (3600 * 24)) / 3600);
+  const minutes = Math.floor((uptimeInSeconds % 3600) / 60);
+
+  let formattedString = '';
+  if (days > 0) {
+    formattedString += days + ' day' + (days > 1 ? 's ' : ' ');
+  }
+  if (hours > 0) {
+    formattedString += hours + ' hour' + (hours > 1 ? 's ' : ' ');
+  }
+  if (minutes > 0 || formattedString === '') {
+    formattedString += minutes + ' min' + (minutes > 1 ? 's ' : ' ');
+  }
+
+  return formattedString.trim();
+}
+
 export const useGatewaysStore = defineStore('Gateways', {
   state: () => ({
     gateways: ref([]),
@@ -105,6 +124,10 @@ export const useGatewaysStore = defineStore('Gateways', {
       this.gatewayHealthEventSource = createGatewayHealthEventSource(id)
       this.gatewayHealthEventSource.onmessage = (event) => {
         this.gatewayHealth = JSON.parse(event.data).data.gatewayHealth
+        this.gatewayHealth._time = new Date(this.gatewayHealth._time).toLocaleString()
+        this.gatewayHealth.humidity = this.gatewayHealth.humidity.toFixed(1)
+        this.gatewayHealth.temperature = this.gatewayHealth.temperature.toFixed(1)
+        this.gatewayHealth.uptime = formatUptime(this.gatewayHealth.uptime)
       }
     },
     stopListenGatewayHealth() {

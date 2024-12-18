@@ -272,6 +272,56 @@ function renderBarChart() {
     })
   )
 }
+
+function getResetReasonDescription(reason) {
+  switch (reason) {
+    case 1:
+      return 'Reset reason can not be determined'
+    case 2:
+      return 'Software reset via esp_restart'
+    case 3:
+      return 'Software reset due to exception/panic'
+    case 4:
+      return 'Reset (software or hardware) due to interrupt watchdog'
+    case 5:
+      return 'Reset due to task watchdog'
+    case 6:
+      return 'Reset due to task watchdog'
+    case 7:
+      return 'Reset due to power-on event'
+    case 8:
+      return 'Brownout reset (software or hardware)'
+    case 9:
+      return 'Default reset reason'
+    default:
+      return 'Unknown reset reason'
+  }
+}
+
+function getResetTitle(reason) {
+  switch (reason) {
+    case 1:
+      return 'Unknown'
+    case 2:
+      return 'Reset Software'
+    case 3:
+      return 'Reset Due to Panic'
+    case 4:
+      return 'Interrupt Watchdog Reset'
+    case 5:
+      return 'Task Watchdog Reset'
+    case 6:
+      return 'Task Watchdog Reset'
+    case 7:
+      return 'Power-On Reset'
+    case 8:
+      return 'Brownout Reset'
+    case 9:
+      return 'Default Reset'
+    default:
+      return 'Unknown Title'
+  }
+}
 </script>
 
 <script>
@@ -348,6 +398,24 @@ export default {
                 <div class="flex gap-[10px]">
                   <p class="text-label-secondary">Radio Protocol Version:</p>
                   <p class="text-text-label-primary">{{ statusDeviceDetail.rdVersion }}</p>
+                </div>
+                <div class="flex gap-[10px]">
+                  <p class="text-label-secondary">Reset Reason</p>
+                  <p class="text-text-label-primary">
+                    {{ getResetTitle(statusDeviceDetail.resetReason) }}
+                  </p>
+                  <div class="dropdown">
+                    <img
+                      src="../assets/info-icon.svg"
+                      alt=""
+                      height="14px"
+                      width="14px"
+                      class="cursor-pointer"
+                    />
+                    <div class="dropdown-content w-full">
+                      {{ getResetReasonDescription(statusDeviceDetail.resetReason) }}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -745,5 +813,18 @@ export default {
   background: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20"><path fill="%23999" d="M10 12l-5-5h10l-5 5z"/></svg>')
     no-repeat right 1px center;
   @apply w-full cursor-pointer focus:outline-none text-label-primary;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  @apply opacity-0 flex flex-col gap-1 invisible absolute left-0 bg-bkg-secondary rounded-lg z-10 border min-w-[180px] shadow-lg transition-opacity ease-in-out delay-100 duration-300 p-4;
+}
+
+.dropdown:hover > .dropdown-content {
+  @apply opacity-100 visible;
 }
 </style>

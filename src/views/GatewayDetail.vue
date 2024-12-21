@@ -9,8 +9,13 @@ import { useGatewaysStore } from '@/stores/master-data/gateways-store'
 import SearchBar from '@/components/input/SearchBar.vue'
 
 const telemetryStore = useTelemetryStore()
-const { getTelemetryDetailLoading, statusDeviceDetail, deviceDataLogs } =
-  storeToRefs(useTelemetryStore())
+const {
+  getTelemetryDetailLoading,
+  statusDeviceDetail,
+  deviceDataLogs,
+  getTelemetryResetReasonLoading,
+  telemetryResetReasonData
+} = storeToRefs(useTelemetryStore())
 const gatewayStore = useGatewaysStore()
 const { gatewayNodes, getGatewayNodesLoading, gatewayHealth } = storeToRefs(useGatewaysStore())
 
@@ -29,6 +34,7 @@ onMounted(async () => {
 onUnmounted(() => {
   gatewayStore.stopListenGatewayHealth()
   telemetryStore.stopListenTelemetryDetail()
+  loadResetReasonData()
 })
 
 //table
@@ -36,6 +42,11 @@ const header = [
   { text: 'Timestamp', value: 'timestamp', sortable: true },
   { text: 'Tag', value: 'tag', sortable: true },
   { text: 'Value', value: 'value', sortable: true }
+]
+const historyResetReasonHeader = [
+  { text: 'Timestamp', value: '_time', sortable: true },
+  { text: 'Reset Reaason', value: 'resetReason', sortable: true },
+  { text: 'Description', value: 'description', sortable: true }
 ]
 //table
 const nodeListHeader = [
@@ -72,6 +83,32 @@ function getResetReasonDescription(reason) {
     default:
       return 'Unknown reset reason'
   }
+}
+
+const now = new Date()
+const tomorrow = new Date(now)
+tomorrow.setDate(now.getDate() + 1)
+
+const dataResetReasonStartDate = ref(now.toLocaleDateString('en-CA'))
+const startResetReasonTime = ref(
+  new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+)
+const dataResetReasonEndDate = ref(tomorrow.toLocaleDateString('en-CA'))
+const endResetReasonTime = ref(
+  new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+)
+
+async function loadResetReasonData() {
+  const queryParams = {}
+
+  queryParams.startTime = new Date(
+    dataResetReasonStartDate.value + 'T' + startResetReasonTime.value
+  ).toISOString()
+  queryParams.endTime = new Date(
+    dataResetReasonEndDate.value + 'T' + endResetReasonTime.value
+  ).toISOString()
+
+  await telemetryStore.getTelemetryResetReason(props.id, queryParams)
 }
 
 function getResetTitle(reason) {
@@ -189,6 +226,85 @@ function getResetTitle(reason) {
       <div
         class="flex-1 m-[20px] flex h-[3000px] p-8 bg-bkg-primary rounded-[10px] shadow border border-bkg-secondary flex-col gap-5"
       >
+        <div class="flex flex-col gap-6">
+          <h1 class="text-accent-1 font-medium text-lg">Data Analytics</h1>
+          <div class="flex flex-col gap-4">
+            <div class="flex justify-between mb-6">
+              <p class="font-semibold">Telemetry Data Reset Reason History</p>
+              <div class="flex items-center">
+                <div class="grid grid-cols-2 gap-4">
+                  <div
+                    class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
+                  >
+                    <h2 class="font-semibold text-xs">From</h2>
+                    <div class="flex gap-6">
+                      <input
+                        class="cursor-pointer outline-none bg-transparent text-xs"
+                        type="date"
+                        name="startDateResetReason"
+                        id="startDateResetReason"
+                        v-model="dataResetReasonStartDate"
+                      />
+                      <input
+                        class="cursor-pointer outline-none bg-transparent text-xs"
+                        type="time"
+                        name="startTimeResetReason"
+                        id="startTimeResetReason"
+                        v-model="startResetReasonTime"
+                      />
+                    </div>
+                  </div>
+                  <div
+                    class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
+                  >
+                    <h2 class="font-semibold text-xs">To</h2>
+                    <div class="flex gap-6">
+                      <input
+                        class="cursor-pointer outline-none bg-transparent text-xs"
+                        type="date"
+                        name="endDateResetReason"
+                        id="endDateResetReason"
+                        v-model="dataResetReasonEndDate"
+                      />
+                      <input
+                        class="cursor-pointer outline-none bg-transparent text-xs"
+                        type="time"
+                        name="endTimeResetReason"
+                        id="endTimeResetReason"
+                        v-model="endResetReasonTime"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="w-fit">
+                  <BaseButton
+                    type="submit"
+                    class="primary"
+                    label="Filter"
+                    :loading="getTelemetryResetReasonLoading"
+                    @click="loadResetReasonData()"
+                  />
+                </div>
+              </div>
+            </div>
+            <EasyDataTable
+              :rows-per-page="10"
+              table-class-name="customize-table"
+              :headers="historyResetReasonHeader"
+              :items="telemetryResetReasonData"
+              theme-color="#1363dF"
+              :loading="getTelemetryHistoryLoading"
+            >
+              <template #item-description="item">
+                {{ getResetReasonDescription(item.resetReason) }}
+              </template>
+            </EasyDataTable>
+          </div>
+        </div>
+      </div>
+      <div
+        class="flex-1 m-[20px] flex h-[3000px] p-8 bg-bkg-primary rounded-[10px] shadow border border-bkg-secondary flex-col gap-5"
+      >
         <div class="grid grid-cols-2">
           <div class="flex flex-col gap-6 border-r mr-10">
             <h1 class="text-accent-1 font-medium text-lg">Status</h1>
@@ -231,11 +347,16 @@ function getResetTitle(reason) {
               </div>
             </div>
           </div>
-          <!-- <div class="flex flex-col gap-6 hidden">
-            <h1 class="text-accent-1 font-medium text-lg">Changelog</h1>
-            <EasyDataTable :rows-per-page="10" table-class-name="customize-table table-scroll" :headers="header"
-              :items="items" theme-color="#1363df"></EasyDataTable>
-          </div> -->
+          <div class="flex flex-col gap-6 hidden">
+            <h1 class="text-accent-1 font-medium text-lg">History Reset Reason</h1>
+            <EasyDataTable
+              :rows-per-page="10"
+              table-class-name="customize-table table-scroll"
+              :headers="historyResetReasonHeader"
+              :items="items"
+              theme-color="#1363df"
+            ></EasyDataTable>
+          </div>
         </div>
 
         <div class="flex flex-col gap-4 mt-4">

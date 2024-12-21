@@ -5,43 +5,41 @@ import moment from 'moment'
 import { createStatusDeviceEventSource, createDeviceDetailsEventSource } from '@/services/sse'
 
 const getDateNdaysAgo = (n) => {
-  const date = new Date();
-  date.setDate(date.getDate() - n);
-  return date.toLocaleDateString('en-CA');
+  const date = new Date()
+  date.setDate(date.getDate() - n)
+  return date.toLocaleDateString('en-CA')
 }
-
 
 function rssiToDbm(rssi) {
-  const minDbm = -100;
-  const maxDbm = 0;
-  const minRssi = 0;
-  const maxRssi = 255;
+  const minDbm = -100
+  const maxDbm = 0
+  const minRssi = 0
+  const maxRssi = 255
 
   // Linear mapping from RSSI to dBm
-  return minDbm + (rssi - minRssi) * (maxDbm - minDbm) / (maxRssi - minRssi);
+  return minDbm + ((rssi - minRssi) * (maxDbm - minDbm)) / (maxRssi - minRssi)
 }
 function formatUptime(uptimeInSeconds) {
-  const days = Math.floor(uptimeInSeconds / (3600 * 24));
-  const hours = Math.floor((uptimeInSeconds % (3600 * 24)) / 3600);
-  const minutes = Math.floor((uptimeInSeconds % 3600) / 60);
+  const days = Math.floor(uptimeInSeconds / (3600 * 24))
+  const hours = Math.floor((uptimeInSeconds % (3600 * 24)) / 3600)
+  const minutes = Math.floor((uptimeInSeconds % 3600) / 60)
 
-  let formattedString = '';
+  let formattedString = ''
   if (days > 0) {
-    formattedString += days + ' day' + (days > 1 ? 's ' : ' ');
+    formattedString += days + ' day' + (days > 1 ? 's ' : ' ')
   }
   if (hours > 0) {
-    formattedString += hours + ' hour' + (hours > 1 ? 's ' : ' ');
+    formattedString += hours + ' hour' + (hours > 1 ? 's ' : ' ')
   }
   if (minutes > 0 || formattedString === '') {
-    formattedString += minutes + ' min' + (minutes > 1 ? 's ' : ' ');
+    formattedString += minutes + ' min' + (minutes > 1 ? 's ' : ' ')
   }
 
-  return formattedString.trim();
+  return formattedString.trim()
 }
 
-
 function convertToArray(data) {
-  let result = [];
+  let result = []
 
   for (let key in data) {
     if (data.hasOwnProperty(key)) {
@@ -49,10 +47,10 @@ function convertToArray(data) {
         timestamp: data[key]._time,
         tag: key,
         value: data[key]._value
-      });
+      })
     }
   }
-  return result;
+  return result
 }
 
 export const useTelemetryStore = defineStore('Telemetry', {
@@ -79,27 +77,34 @@ export const useTelemetryStore = defineStore('Telemetry', {
     gatewaysData: ref([]),
     nodesData: ref([]),
     telemetryData: ref([]),
+    telemetryResetReasonData: ref([]),
     telemetryDataCompleteness: ref(),
     offlineNodesList: ref([]),
     offlineGatewaysList: ref([]),
     getTelemetryDetailStatus: ref({
       isError: null,
       message: null,
-      code: null,
+      code: null
     }),
     getTelemetryHistoryStatus: ref({
       isError: null,
       message: null,
-      code: null,
+      code: null
     }),
     getTelemetryCompletenessStatus: ref({
       isError: null,
       message: null,
-      code: null,
+      code: null
+    }),
+    getTelemetryResetReasonStatus: ref({
+      isError: null,
+      message: null,
+      code: null
     }),
     getTelemetryDetailLoading: ref(false),
     getTelemetryHistoryLoading: ref(false),
     getTelemetryCompletenessLoading: ref(false),
+    getTelemetryResetReasonLoading: ref(false),
     eventSource: null,
     telemetryDetailEventSource: null,
     eventData: ref(),
@@ -160,6 +165,29 @@ export const useTelemetryStore = defineStore('Telemetry', {
         return err
       }
     },
+    async getTelemetryResetReason(sn, params) {
+      this.getTelemetryResetReasonLoading = true
+      try {
+        const res = await telemetryAPI.getTelemetryResetReason(sn, params)
+        this.telemetryResetReasonData = res.data.healthHistory
+        this.telemetryResetReasonData.map((data) => {
+          data._time = moment(data._time).format('MM/DD/YYYY , HH:mm:ss')
+        })
+
+        console.log(this.telemetryResetReasonData.values)
+        this.getTelemetryResetReasonLoading = false
+        this.getTelemetryResetReasonStatus.code = res.status
+        this.getTelemetryResetReasonStatus.message = 'Data Fetched'
+        this.getTelemetryResetReasonStatus.isError = false
+      } catch (err) {
+        console.error(err)
+        this.getTelemetryHistoryLoading = false
+        this.getTelemetryResetReasonStatus.code = err.response.data.status
+        this.getTelemetryResetReasonStatus.message = JSON.stringify(err.response.data.data)
+        this.getTelemetryResetReasonStatus.isError = true
+        // return err
+      }
+    },
     async getTelemetryCompleteness(sn, params) {
       this.getTelemetryCompletenessLoading = true
       try {
@@ -186,7 +214,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
       this.yesterdayDataCompleteness = null
       queryParams.startTime = getDateNdaysAgo(1)
       queryParams.endTime = new Date().toLocaleDateString('en-CA')
-      queryParams.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      queryParams.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
       try {
         const res = await telemetryAPI.getTelemetryCompleteness(sn, queryParams)
         this.yesterdayDataCompleteness = res.data.completeness.dataCount
@@ -266,18 +294,17 @@ export const useTelemetryStore = defineStore('Telemetry', {
 
         this.nodesData = nodes
         this.nodesData.map((data) => {
-          console.log('b',data._time)
+          console.log('b', data._time)
 
           let parsedTime
 
           if (moment(data._time, 'MM/DD/YYYY, h:mm:ss A', true).isValid()) {
-            parsedTime = moment(data._time, 'MM/DD/YYYY, h:mm:ss A').toISOString();
-          }
-          else if (moment(data._time, moment.ISO_8601, true).isValid()) {
-            parsedTime = data._time; // It's already in ISO format
+            parsedTime = moment(data._time, 'MM/DD/YYYY, h:mm:ss A').toISOString()
+          } else if (moment(data._time, moment.ISO_8601, true).isValid()) {
+            parsedTime = data._time // It's already in ISO format
           } else {
-            console.error(`Invalid date format: ${data._time}`);
-            return; // Skip this entry
+            console.error(`Invalid date format: ${data._time}`)
+            return // Skip this entry
           }
           data._time = moment(parsedTime).format('MM/DD/YYYY , HH:mm')
           data.lastHeard = formatUptime(Math.floor((new Date() - new Date(data._time)) / 1000))
@@ -286,7 +313,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
           data.uptime = formatUptime(data.uptime)
           data.rssi = Math.floor(rssiToDbm(data.rssi))
 
-          console.log('a',data._time)
+          console.log('a', data._time)
         })
 
         if (this.totalGateways === 0) {
@@ -305,7 +332,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
       }
       this.eventSource.onerror = (err) => {
         console.error('EventSource failed:', err)
-        this.stopListening(); // Stop listening on error
+        this.stopListening() // Stop listening on error
       }
     },
     stopListening() {
@@ -313,8 +340,6 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.eventSource.close()
         this.eventSource = null
       }
-    },
-
-
+    }
   }
 })

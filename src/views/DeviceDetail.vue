@@ -40,8 +40,10 @@ const {
   yesterdayDataCompleteness,
   getTelemetryDetailLoading,
   telemetryDataCompleteness,
+  getTelemetryResetReasonLoading,
   getTelemetryCompletenessLoading,
   telemetryData,
+  telemetryResetReasonData,
   getTelemetryHistoryLoading,
   statusDeviceDetail,
   deviceDataLogs,
@@ -77,7 +79,9 @@ onMounted(async () => {
   await telemetryStore.getYesterdayDataCompleteness(props.id)
   await telemetryStore.listenTelemetryDetail(props.id)
   telemeryLoading.value = false
+
   loadHistoricalData()
+  loadResetReasonData()
   renderBarChart()
 })
 
@@ -94,6 +98,11 @@ const header = [
 const historyHeader = [
   { text: 'Timestamp', value: '_time', sortable: true },
   { text: 'Value', value: '_value', sortable: true }
+]
+const historyResetReasonHeader = [
+  { text: 'Timestamp', value: '_time', sortable: true },
+  { text: 'Reset Reaason', value: 'resetReason', sortable: true },
+  { text: 'Description', value: 'description', sortable: true }
 ]
 
 const selectedTag = useLocalStorage('selectedTag', '0')
@@ -115,6 +124,19 @@ const endTime = ref(
 const dataCompStartDate = ref(getDateNdaysAgo(7))
 const dataCompEndDate = ref(new Date().toLocaleDateString('en-CA'))
 
+const now = new Date()
+const tomorrow = new Date(now)
+tomorrow.setDate(now.getDate() + 1)
+
+const dataResetReasonStartDate = ref(now.toLocaleDateString('en-CA'))
+const startResetReasonTime = ref(
+  new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+)
+const dataResetReasonEndDate = ref(tomorrow.toLocaleDateString('en-CA'))
+const endResetReasonTime = ref(
+  new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
+)
+
 const getYesterday = () => {
   const date = new Date()
   date.setDate(date.getDate() - 1)
@@ -132,6 +154,19 @@ async function loadHistoricalData() {
     queryParams.endTime = new Date(endDate.value + 'T' + endTime.value).toISOString()
     await telemetryStore.getTelemetryHistory(props.id, queryParams)
   }
+}
+
+async function loadResetReasonData() {
+  const queryParams = {}
+
+  queryParams.startTime = new Date(
+    dataResetReasonStartDate.value + 'T' + startResetReasonTime.value
+  ).toISOString()
+  queryParams.endTime = new Date(
+    dataResetReasonEndDate.value + 'T' + endResetReasonTime.value
+  ).toISOString()
+
+  await telemetryStore.getTelemetryResetReason(props.id, queryParams)
 }
 
 function generateColor(label) {
@@ -521,79 +556,139 @@ export default {
                 </p>
               </div>
             </div>
-          </div>
-          <!-- <div class="flex justify-between">
-            <div class="custom-select">
-              <select class="custom-select-option" name="type" id="type" v-model="selectedTag">
-                <option value="0" class="text-label-tertiary" disabled selected>Data Tag</option>
-                <option v-for="data in dataTags" :value="data">{{ data }}</option>
-              </select>
-            </div>
-            
-          </div> -->
-
-          <div class="bg-[#f7f8fa] w-fit p-1 rounded-lg">
-            <button
-              v-for="(tab, index) in tabs"
-              :key="index"
-              @click="activeTab = index"
-              :class="{
-                'border-white text-[#0989c0] bg-white': activeTab === index,
-                'border-transparent text-gray-300': activeTab !== index
-              }"
-              class="px-4 py-2 font-semibold border-b-2 transition duration-300 ease-in-out text-md"
-            >
-              {{ tab }}
-            </button>
-          </div>
-
-          <div :style="{ display: activeTab === 0 ? 'block' : 'none' }">
-            <div>
-              <ul
-                class="items-center w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg sm:flex"
+            <div class="bg-[#f7f8fa] w-fit p-1 rounded-lg">
+              <button
+                v-for="(tab, index) in tabs"
+                :key="index"
+                @click="activeTab = index"
+                :class="{
+                  'border-white text-[#0989c0] bg-white': activeTab === index,
+                  'border-transparent text-gray-300': activeTab !== index
+                }"
+                class="px-4 py-2 font-semibold border-b-2 transition duration-300 ease-in-out text-md"
               >
-                <li
-                  v-for="(col, index) in dynamicColumns"
-                  :key="index"
-                  class="w-full border-b border-gray-200 sm:border-b-0 sm:border-r"
+                {{ tab }}
+              </button>
+            </div>
+
+            <div :style="{ display: activeTab === 0 ? 'block' : 'none' }">
+              <div>
+                <ul
+                  class="items-center w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg sm:flex"
                 >
-                  <div class="flex items-center ps-3">
-                    <input
-                      v-model="columnVisibility[col]"
-                      id="checkbox-{{ col }}"
-                      type="checkbox"
-                      @change="toggleColumn()"
-                      class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                    />
-                    <label
-                      :for="'checkbox-' + col"
-                      class="w-full py-3 ms-2 text-sm font-medium text-gray-900"
-                      >{{ col }}</label
-                    >
+                  <li
+                    v-for="(col, index) in dynamicColumns"
+                    :key="index"
+                    class="w-full border-b border-gray-200 sm:border-b-0 sm:border-r"
+                  >
+                    <div class="flex items-center ps-3">
+                      <input
+                        v-model="columnVisibility[col]"
+                        id="checkbox-{{ col }}"
+                        type="checkbox"
+                        @change="toggleColumn()"
+                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                      />
+                      <label
+                        :for="'checkbox-' + col"
+                        class="w-full py-3 ms-2 text-sm font-medium text-gray-900"
+                        >{{ col }}</label
+                      >
+                    </div>
+                  </li>
+                </ul>
+              </div>
+
+              <div>
+                <EasyDataTable
+                  :rows-per-page="10"
+                  table-class-name="customize-table"
+                  :headers="visibleHeaders"
+                  :items="tableData"
+                  theme-color="#1363dF"
+                  :loading="getTelemetryHistoryLoading"
+                >
+                </EasyDataTable>
+              </div>
+            </div>
+
+            <div :style="{ display: activeTab === 1 ? 'block' : 'none' }">
+              <canvas ref="historyBarChartCanvas" class="w-full"></canvas>
+            </div>
+          </div>
+          <hr />
+          <div class="flex flex-col gap-4">
+            <div class="flex justify-between mb-6">
+              <p class="font-semibold">Telemetry Data Reset Reason History</p>
+              <div class="flex items-center">
+                <div class="grid grid-cols-2 gap-4">
+                  <div
+                    class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
+                  >
+                    <h2 class="font-semibold text-xs">From</h2>
+                    <div class="flex gap-6">
+                      <input
+                        class="cursor-pointer outline-none bg-transparent text-xs"
+                        type="date"
+                        name="startDateResetReason"
+                        id="startDateResetReason"
+                        v-model="dataResetReasonStartDate"
+                      />
+                      <input
+                        class="cursor-pointer outline-none bg-transparent text-xs"
+                        type="time"
+                        name="startTimeResetReason"
+                        id="startTimeResetReason"
+                        v-model="startResetReasonTime"
+                      />
+                    </div>
                   </div>
-                </li>
-              </ul>
+                  <div
+                    class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
+                  >
+                    <h2 class="font-semibold text-xs">To</h2>
+                    <div class="flex gap-6">
+                      <input
+                        class="cursor-pointer outline-none bg-transparent text-xs"
+                        type="date"
+                        name="endDateResetReason"
+                        id="endDateResetReason"
+                        v-model="dataResetReasonEndDate"
+                      />
+                      <input
+                        class="cursor-pointer outline-none bg-transparent text-xs"
+                        type="time"
+                        name="endTimeResetReason"
+                        id="endTimeResetReason"
+                        v-model="endResetReasonTime"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div class="w-fit">
+                  <BaseButton
+                    type="submit"
+                    class="primary"
+                    label="Filter"
+                    :loading="getTelemetryResetReasonLoading"
+                    @click="loadResetReasonData()"
+                  />
+                </div>
+              </div>
             </div>
-
-            <div>
-              <EasyDataTable
-                :rows-per-page="10"
-                table-class-name="customize-table"
-                :headers="visibleHeaders"
-                :items="tableData"
-                theme-color="#1363dF"
-                :loading="getTelemetryHistoryLoading"
-              >
-              </EasyDataTable>
-            </div>
+            <EasyDataTable
+              :rows-per-page="10"
+              table-class-name="customize-table"
+              :headers="historyResetReasonHeader"
+              :items="telemetryResetReasonData"
+              theme-color="#1363dF"
+              :loading="getTelemetryHistoryLoading"
+            >
+              <template #item-description="item">
+                {{ getResetReasonDescription(item.resetReason) }}
+              </template>
+            </EasyDataTable>
           </div>
-
-          <div :style="{ display: activeTab === 1 ? 'block' : 'none' }">
-            <canvas ref="historyBarChartCanvas" class="w-full"></canvas>
-          </div>
-
-          <!-- <EasyDataTable :rows-per-page="10" table-class-name="customize-table" :headers="header" :items="telemetryData"
-            theme-color="#1363df" :loading="getTelemetryHistoryLoading"></EasyDataTable> -->
         </div>
       </div>
       <div

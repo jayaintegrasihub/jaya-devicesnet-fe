@@ -296,6 +296,9 @@ function getResetTitle(reason) {
               theme-color="#1363dF"
               :loading="getTelemetryHistoryLoading"
             >
+              <template #item-resetReason="item">
+                {{ getResetTitle(item.resetReason) }}
+              </template>
               <template #item-description="item">
                 {{ getResetReasonDescription(item.resetReason) }}
               </template>

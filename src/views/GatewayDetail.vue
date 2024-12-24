@@ -6,6 +6,7 @@ import { storeToRefs } from 'pinia'
 import router from '@/router'
 import { useTelemetryStore } from '@/stores/telemetry/telemetry-store'
 import { useGatewaysStore } from '@/stores/master-data/gateways-store'
+import BaseButton from '@/components/input/BaseButton.vue'
 import SearchBar from '@/components/input/SearchBar.vue'
 
 const telemetryStore = useTelemetryStore()

@@ -27,8 +27,10 @@ import { loginSchema } from '@/composable/authSchema'
      @close="closeNotification"
   />
 
-  <div class="xl:bg-[url('@/assets/login-bg.png')] w-full h-full bg-cover absolute z-0 flex p-[20px]">
-    <img alt="telemetric logo" class="w-[100px] absolute left-[20px] bottom-[20px] invisible xl:visible" src="../../assets/telemetric-logo.svg" width="200" height="200" />
+  <div class="xl:bg-[url('@/assets/login-bg.png')] w-full h-full bg-cover absolute z-0 flex flex-col p-[20px]">
+    <div class="flex justify-center items-center h\w-screen">
+      <img alt="telemetric logo" class="w-[200px]  invisible xl:visible" src="../../assets/telemetric-logo.svg" width="200" height="200" />
+    </div>
     <img alt="jin logo" class="w-[100px] absolute right-[20px] bottom-[20px] invisible xl:visible" src="../../assets/white-logo.svg" width="125" height="125" />
     <img alt="jin logo" class="w-[100px] absolute right-[20px] bottom-[20px] visible xl:invisible" src="../../assets/black-logo.svg" width="125" height="125" />
     <div class="w-full xl:w-fit my-auto xl:mx-auto items-start xl:items-center flex flex-col xl:flex-row gap-4 xl:gap-80">

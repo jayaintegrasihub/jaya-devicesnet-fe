@@ -536,26 +536,7 @@ export default {
               </div>
             </div>
 
-            <div class="flex flex-wrap gap-4">
-              <div
-                v-for="(key, value) in yesterdayDataCompleteness"
-                class="px-4 py-3 bg-bkg-secondary w-fit flex flex-col gap-1"
-              >
-                <p class="text-sm font-medium text-accent-1 mb-3">
-                  {{ value }}
-                </p>
-                <p class="font-medium">
-                  {{ key[0].count }} /
-                  <span class="">
-                    {{ 8640 }}
-                  </span>
-                </p>
-                <hr />
-                <p class="text-end text-accent-1 text-sm w-full font-medium">
-                  {{ Math.round((key[0].count / 8640) * 100) }}%
-                </p>
-              </div>
-            </div>
+            
             <div class="bg-[#f7f8fa] w-fit p-1 rounded-lg">
               <button
                 v-for="(tab, index) in tabs"

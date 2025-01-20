@@ -10,14 +10,9 @@ const getDateNdaysAgo = (n) => {
   return date.toLocaleDateString('en-CA')
 }
 
-function rssiToDbm(rssi) {
-  const minDbm = -100
-  const maxDbm = 0
-  const minRssi = 0
-  const maxRssi = 255
 
-  // Linear mapping from RSSI to dBm
-  return minDbm + ((rssi - minRssi) * (maxDbm - minDbm)) / (maxRssi - minRssi)
+function rssiToDbm(rssi) {
+  return -256 + rssi
 }
 function formatUptime(uptimeInSeconds) {
   const days = Math.floor(uptimeInSeconds / (3600 * 24))

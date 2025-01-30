@@ -255,7 +255,7 @@ function changeNavigation(navigation) {
         </div>
       </div>
       <div class="m-[20px] flex-1 rounded-[10px] flex-col gap-5 flex">
-        <div class="mx-8 grid grid-row gap-6 md:gap-10">
+        <div class="mx-[20px] grid grid-row gap-6 md:gap-10">
           <div class="md:w-fit">
             <Tab :tabs="tabs" @clicked="changeNavigation" />
           </div>

@@ -799,8 +799,7 @@ export default {
               </EasyDataTable>
             </div>
           </div>
-
-          <div class="flex flex-col gap-4">
+          <div class="flex flex-col gap-4 mt-12">
             <h1 class="text-accent-1 font-medium text-lg">Historical Data</h1>
             <div class="flex justify-between">
               <div class="custom-select">

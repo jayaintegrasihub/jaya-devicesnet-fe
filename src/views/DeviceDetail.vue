@@ -494,7 +494,7 @@ export default {
         </div>
         <div
           :style="{ display: selectedComponent === 'DataAnalyticsInfo' ? 'block' : 'none' }"
-          class="flex-1 mx-[20px] mt-[20px] flex h-[3000px] p-8 bg-bkg-primary rounded-[10px] mt-1 shadow border border-bkg-secondary flex-col gap-5"
+          class="flex-1 m-[20px] flex h-[3000px] p-8 bg-bkg-primary rounded-[10px] mt-1 shadow border border-bkg-secondary flex-col gap-5"
         >
           <div class="flex flex-col gap-6">
             <h1 class="text-accent-1 font-medium text-lg">Data Analytics</h1>

@@ -512,14 +512,14 @@ export default {
                     {{ value }}
                   </p>
                   <p class="font-medium">
-                    {{ key[0].count }} /
+                    {{ key[1].count }} /
                     <span class="">
                       {{ 8640 }}
                     </span>
                   </p>
                   <hr />
                   <p class="text-end text-accent-1 text-sm w-full font-medium">
-                    {{ Math.round((key[0].count / 8640) * 100) }}%
+                    {{ Math.round((key[1].count / 8640) * 100) }}%
                   </p>
                 </div>
               </div>

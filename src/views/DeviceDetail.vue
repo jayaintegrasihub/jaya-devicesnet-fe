@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, shallowRef } from 'vue'
 import IconButton from '@/components/input/IconButton.vue'
+import Tab from '@/components/tab/Tab.vue'
 import BaseIndicator from '@/components/indicator/BaseIndicator.vue'
 import { storeToRefs } from 'pinia'
 import router from '@/router'
@@ -83,6 +84,9 @@ onMounted(async () => {
   loadHistoricalData()
   loadResetReasonData()
   renderBarChart()
+
+  var element = document.getElementById(selectedComponent.value)
+  element.classList.add('active')
 })
 
 onUnmounted(() => {
@@ -357,6 +361,30 @@ function getResetTitle(reason) {
       return 'Unknown Title'
   }
 }
+
+const selectedComponent = useLocalStorage('SelectedNodeInformationTab', 'StatusInfo')
+const tabsInformation = [
+  {
+    title: 'Status',
+    value: 'StatusInfo'
+  },
+  {
+    title: 'Data Analytics',
+    value: 'DataAnalyticsInfo'
+  }
+]
+
+function changeNavigation(navigation) {
+  var subNavs = document.getElementsByClassName('nav')
+  console.log(subNavs)
+  for (var i of subNavs) {
+    i.classList.remove('active')
+  }
+  console.log(navigation)
+  // event.target.classList.add("active")
+  event.target.className += ' active'
+  selectedComponent.value = navigation
+}
 </script>
 
 <script>
@@ -458,41 +486,328 @@ export default {
         </div>
       </div>
 
-      <div
-        class="flex-1 mx-[20px] mt-[20px] flex h-[3000px] p-8 bg-bkg-primary rounded-[10px] shadow border border-bkg-secondary flex-col gap-5"
-      >
-        <div class="flex flex-col gap-6">
-          <h1 class="text-accent-1 font-medium text-lg">Data Analytics</h1>
-          <div class="flex flex-col gap-4">
-            <div class="flex flex-col">
-              <p class="font-semibold">Telemetry Data Completeness Daily</p>
-              <p class="text-xs text-label-secondary">{{ yesterdayDate }} to {{ endDate }}</p>
-            </div>
-            <div class="flex flex-wrap gap-4">
-              <div
-                v-for="(key, value) in yesterdayDataCompleteness"
-                class="px-4 py-3 bg-bkg-secondary w-fit flex flex-col gap-1"
-              >
-                <p class="text-sm font-medium text-accent-1 mb-3">
-                  {{ value }}
-                </p>
-                <p class="font-medium">
-                  {{ key[0].count }} /
-                  <span class="">
-                    {{ 8640 }}
-                  </span>
-                </p>
-                <hr />
-                <p class="text-end text-accent-1 text-sm w-full font-medium">
-                  {{ Math.round((key[0].count / 8640) * 100) }}%
-                </p>
+      <div class="m-[20px] flex-1 rounded-[10px] flex-col gap-5 flex">
+        <div class="mx-[20px] grid grid-row gap-6 md:gap-10">
+          <div class="md:w-fit">
+            <Tab :tabs="tabsInformation" @clicked="changeNavigation" />
+          </div>
+        </div>
+        <div
+          :style="{ display: selectedComponent === 'DataAnalyticsInfo' ? 'block' : 'none' }"
+          class="flex-1 m-[20px] flex h-[3000px] p-8 bg-bkg-primary rounded-[10px] mt-1 shadow border border-bkg-secondary flex-col gap-5"
+        >
+          <div class="flex flex-col gap-6">
+            <h1 class="text-accent-1 font-medium text-lg">Data Analytics</h1>
+            <div class="flex flex-col gap-4">
+              <div class="flex flex-col">
+                <p class="font-semibold">Telemetry Data Completeness Daily</p>
+                <p class="text-xs text-label-secondary">{{ yesterdayDate }} to {{ endDate }}</p>
+              </div>
+              <div class="flex flex-wrap gap-4">
+                <div
+                  v-for="(key, value) in yesterdayDataCompleteness"
+                  class="px-4 py-3 bg-bkg-secondary w-fit flex flex-col gap-1"
+                >
+                  <p class="text-sm font-medium text-accent-1 mb-3">
+                    {{ value }}
+                  </p>
+                  <p class="font-medium">
+                    {{ key[1].count }} /
+                    <span class="">
+                      {{ 8640 }}
+                    </span>
+                  </p>
+                  <hr />
+                  <p class="text-end text-accent-1 text-sm w-full font-medium">
+                    {{ Math.round((key[1].count / 8640) * 100) }}%
+                  </p>
+                </div>
               </div>
             </div>
+            <hr />
+            <div class="flex flex-col gap-4">
+              <div class="flex justify-between">
+                <p class="font-semibold">Telemetry Data Completeness History</p>
+                <div class="flex items-center">
+                  <div class="grid grid-cols-2 gap-4">
+                    <div
+                      class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
+                    >
+                      <h2 class="font-semibold text-xs">From</h2>
+                      <div class="flex gap-6">
+                        <input
+                          class="cursor-pointer outline-none bg-transparent text-xs"
+                          type="date"
+                          name="startDate"
+                          id="startDate"
+                          v-model="dataCompStartDate"
+                        />
+                      </div>
+                    </div>
+                    <div
+                      class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
+                    >
+                      <h2 class="font-semibold text-xs">To</h2>
+                      <div class="flex gap-6">
+                        <input
+                          class="cursor-pointer outline-none bg-transparent text-xs"
+                          type="date"
+                          name="endDate"
+                          id="endDate"
+                          v-model="dataCompEndDate"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="w-fit">
+                    <BaseButton
+                      type="submit"
+                      class="primary"
+                      label="Filter"
+                      :loading="getTelemetryHistoryLoading"
+                      @click="loadDataCompletenessHistory()"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-[#f7f8fa] w-fit p-1 rounded-lg">
+                <button
+                  v-for="(tab, index) in tabs"
+                  :key="index"
+                  @click="activeTab = index"
+                  :class="{
+                    'border-white text-[#0989c0] bg-white': activeTab === index,
+                    'border-transparent text-gray-300': activeTab !== index
+                  }"
+                  class="px-4 py-2 font-semibold border-b-2 transition duration-300 ease-in-out text-md"
+                >
+                  {{ tab }}
+                </button>
+              </div>
+
+              <div :style="{ display: activeTab === 0 ? 'block' : 'none' }">
+                <div>
+                  <ul
+                    class="items-center w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg sm:flex"
+                  >
+                    <li
+                      v-for="(col, index) in dynamicColumns"
+                      :key="index"
+                      class="w-full border-b border-gray-200 sm:border-b-0 sm:border-r"
+                    >
+                      <div class="flex items-center ps-3">
+                        <input
+                          v-model="columnVisibility[col]"
+                          id="checkbox-{{ col }}"
+                          type="checkbox"
+                          @change="toggleColumn()"
+                          class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                        />
+                        <label
+                          :for="'checkbox-' + col"
+                          class="w-full py-3 ms-2 text-sm font-medium text-gray-900"
+                          >{{ col }}</label
+                        >
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+
+                <div>
+                  <EasyDataTable
+                    :rows-per-page="10"
+                    table-class-name="customize-table"
+                    :headers="visibleHeaders"
+                    :items="tableData"
+                    theme-color="#1363dF"
+                    :loading="getTelemetryHistoryLoading"
+                  >
+                  </EasyDataTable>
+                </div>
+              </div>
+
+              <div :style="{ display: activeTab === 1 ? 'block' : 'none' }">
+                <canvas ref="historyBarChartCanvas" class="w-full"></canvas>
+              </div>
+            </div>
+            <hr />
+            <div class="flex flex-col gap-4">
+              <div class="flex justify-between mb-6">
+                <p class="font-semibold">Telemetry Data Reset Reason History</p>
+                <div class="flex items-center">
+                  <div class="grid grid-cols-2 gap-4">
+                    <div
+                      class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
+                    >
+                      <h2 class="font-semibold text-xs">From</h2>
+                      <div class="flex gap-6">
+                        <input
+                          class="cursor-pointer outline-none bg-transparent text-xs"
+                          type="date"
+                          name="startDateResetReason"
+                          id="startDateResetReason"
+                          v-model="dataResetReasonStartDate"
+                        />
+                        <input
+                          class="cursor-pointer outline-none bg-transparent text-xs"
+                          type="time"
+                          name="startTimeResetReason"
+                          id="startTimeResetReason"
+                          v-model="startResetReasonTime"
+                        />
+                      </div>
+                    </div>
+                    <div
+                      class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
+                    >
+                      <h2 class="font-semibold text-xs">To</h2>
+                      <div class="flex gap-6">
+                        <input
+                          class="cursor-pointer outline-none bg-transparent text-xs"
+                          type="date"
+                          name="endDateResetReason"
+                          id="endDateResetReason"
+                          v-model="dataResetReasonEndDate"
+                        />
+                        <input
+                          class="cursor-pointer outline-none bg-transparent text-xs"
+                          type="time"
+                          name="endTimeResetReason"
+                          id="endTimeResetReason"
+                          v-model="endResetReasonTime"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div class="w-fit">
+                    <BaseButton
+                      type="submit"
+                      class="primary"
+                      label="Filter"
+                      :loading="getTelemetryResetReasonLoading"
+                      @click="loadResetReasonData()"
+                    />
+                  </div>
+                </div>
+              </div>
+              <EasyDataTable
+                :rows-per-page="10"
+                table-class-name="customize-table"
+                :headers="historyResetReasonHeader"
+                :items="telemetryResetReasonData"
+                theme-color="#1363dF"
+                :loading="getTelemetryHistoryLoading"
+              >
+                <template #item-resetReason="item">
+                  {{ getResetTitle(item.resetReason) }}
+                </template>
+                <template #item-description="item">
+                  {{ getResetReasonDescription(item.resetReason) }}
+                </template>
+              </EasyDataTable>
+            </div>
           </div>
-          <hr />
-          <div class="flex flex-col gap-4">
+        </div>
+        <div
+          :style="{ display: selectedComponent === 'StatusInfo' ? 'block' : 'none' }"
+          class="flex-1 m-[20px] flex h-[3000px] p-8 bg-bkg-primary rounded-[10px] mt-1 shadow border border-bkg-secondary flex-col gap-14"
+        >
+          <div class="grid grid-cols-2">
+            <div class="flex flex-col gap-6 border-r mr-10">
+              <h1 class="text-accent-1 font-medium text-lg">Status</h1>
+              <div class="grid grid-cols-2">
+                <div class="flex flex-col gap-8">
+                  <div class="flex flex-col gap-3 text-sm">
+                    <p class="text-label-primary">Last Heard</p>
+                    <p class="text-label-primary font-medium">{{ statusDeviceDetail._time }}</p>
+                  </div>
+                  <div class="flex flex-col gap-3 text-sm">
+                    <p class="text-label-primary">Temperature</p>
+                    <div class="flex gap-1 items-center">
+                      <img
+                        alt="telemetric logo"
+                        src="../assets/temp-icon.svg"
+                        width="32"
+                        height="32"
+                      />
+                      <p class="text-label-primary font-medium">
+                        {{ statusDeviceDetail.temperature }} °C
+                      </p>
+                    </div>
+                  </div>
+                  <div class="flex flex-col gap-3 text-sm">
+                    <p class="text-label-primary">Module 1</p>
+                    <div class="flex gap-3 items-center">
+                      <img
+                        alt="telemetric logo"
+                        src="../assets/module-icon.svg"
+                        width="20"
+                        height="20"
+                      />
+                      <p class="text-label-primary font-medium">{{ statusDeviceDetail.module1 }}</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex flex-col gap-8">
+                  <div class="flex flex-col gap-3 text-sm">
+                    <p class="text-label-primary">Uptime</p>
+                    <p class="text-label-primary font-medium">{{ statusDeviceDetail.uptime }}</p>
+                  </div>
+                  <div class="flex flex-col gap-3 text-sm">
+                    <p class="text-label-primary">Humidity</p>
+                    <div class="flex gap-1 items-center">
+                      <img
+                        alt="telemetric logo"
+                        src="../assets/hum-icon.svg"
+                        width="32"
+                        height="32"
+                      />
+                      <p class="text-label-primary font-medium">
+                        {{ statusDeviceDetail.humidity }} %
+                      </p>
+                    </div>
+                  </div>
+                  <div class="flex flex-col gap-3 text-sm">
+                    <p class="text-label-primary">Module 2</p>
+                    <div class="flex gap-3 items-center">
+                      <img
+                        alt="telemetric logo"
+                        src="../assets/module-icon.svg"
+                        width="20"
+                        height="20"
+                      />
+                      <p class="text-label-primary font-medium">{{ statusDeviceDetail.module2 }}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="flex flex-col gap-6">
+              <h1 class="text-accent-1 font-medium text-lg">Data Logs</h1>
+              <EasyDataTable
+                fixed-header
+                table-class-name="customize-table table-scroll"
+                :headers="header"
+                :items="deviceDataLogs"
+                hide-footer
+                theme-color="#1363df"
+                :loading="telemeryLoading"
+                sort-by="timestamp"
+                sort-type="desc"
+              >
+              </EasyDataTable>
+            </div>
+          </div>
+          <div class="flex flex-col gap-4 mt-12">
+            <h1 class="text-accent-1 font-medium text-lg">Historical Data</h1>
             <div class="flex justify-between">
-              <p class="font-semibold">Telemetry Data Completeness History</p>
+              <div class="custom-select">
+                <select class="custom-select-option" name="type" id="type" v-model="selectedTag">
+                  <option value="0" class="text-label-tertiary" disabled selected>Data Tag</option>
+                  <option v-for="data in dataTags" :value="data">{{ data }}</option>
+                </select>
+              </div>
               <div class="flex items-center">
                 <div class="grid grid-cols-2 gap-4">
                   <div
@@ -505,7 +820,14 @@ export default {
                         type="date"
                         name="startDate"
                         id="startDate"
-                        v-model="dataCompStartDate"
+                        v-model="startDate"
+                      />
+                      <input
+                        class="cursor-pointer outline-none bg-transparent text-xs"
+                        type="time"
+                        name="startTime"
+                        id="startTime"
+                        v-model="startTime"
                       />
                     </div>
                   </div>
@@ -519,7 +841,14 @@ export default {
                         type="date"
                         name="endDate"
                         id="endDate"
-                        v-model="dataCompEndDate"
+                        v-model="endDate"
+                      />
+                      <input
+                        class="cursor-pointer outline-none bg-transparent text-xs"
+                        type="time"
+                        name="endTime"
+                        id="endTime"
+                        v-model="endTime"
                       />
                     </div>
                   </div>
@@ -530,315 +859,21 @@ export default {
                     class="primary"
                     label="Filter"
                     :loading="getTelemetryHistoryLoading"
-                    @click="loadDataCompletenessHistory()"
+                    @click="loadHistoricalData()"
                   />
                 </div>
               </div>
             </div>
 
-            
-            <div class="bg-[#f7f8fa] w-fit p-1 rounded-lg">
-              <button
-                v-for="(tab, index) in tabs"
-                :key="index"
-                @click="activeTab = index"
-                :class="{
-                  'border-white text-[#0989c0] bg-white': activeTab === index,
-                  'border-transparent text-gray-300': activeTab !== index
-                }"
-                class="px-4 py-2 font-semibold border-b-2 transition duration-300 ease-in-out text-md"
-              >
-                {{ tab }}
-              </button>
-            </div>
-
-            <div :style="{ display: activeTab === 0 ? 'block' : 'none' }">
-              <div>
-                <ul
-                  class="items-center w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg sm:flex"
-                >
-                  <li
-                    v-for="(col, index) in dynamicColumns"
-                    :key="index"
-                    class="w-full border-b border-gray-200 sm:border-b-0 sm:border-r"
-                  >
-                    <div class="flex items-center ps-3">
-                      <input
-                        v-model="columnVisibility[col]"
-                        id="checkbox-{{ col }}"
-                        type="checkbox"
-                        @change="toggleColumn()"
-                        class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
-                      />
-                      <label
-                        :for="'checkbox-' + col"
-                        class="w-full py-3 ms-2 text-sm font-medium text-gray-900"
-                        >{{ col }}</label
-                      >
-                    </div>
-                  </li>
-                </ul>
-              </div>
-
-              <div>
-                <EasyDataTable
-                  :rows-per-page="10"
-                  table-class-name="customize-table"
-                  :headers="visibleHeaders"
-                  :items="tableData"
-                  theme-color="#1363dF"
-                  :loading="getTelemetryHistoryLoading"
-                >
-                </EasyDataTable>
-              </div>
-            </div>
-
-            <div :style="{ display: activeTab === 1 ? 'block' : 'none' }">
-              <canvas ref="historyBarChartCanvas" class="w-full"></canvas>
-            </div>
-          </div>
-          <hr />
-          <div class="flex flex-col gap-4">
-            <div class="flex justify-between mb-6">
-              <p class="font-semibold">Telemetry Data Reset Reason History</p>
-              <div class="flex items-center">
-                <div class="grid grid-cols-2 gap-4">
-                  <div
-                    class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
-                  >
-                    <h2 class="font-semibold text-xs">From</h2>
-                    <div class="flex gap-6">
-                      <input
-                        class="cursor-pointer outline-none bg-transparent text-xs"
-                        type="date"
-                        name="startDateResetReason"
-                        id="startDateResetReason"
-                        v-model="dataResetReasonStartDate"
-                      />
-                      <input
-                        class="cursor-pointer outline-none bg-transparent text-xs"
-                        type="time"
-                        name="startTimeResetReason"
-                        id="startTimeResetReason"
-                        v-model="startResetReasonTime"
-                      />
-                    </div>
-                  </div>
-                  <div
-                    class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
-                  >
-                    <h2 class="font-semibold text-xs">To</h2>
-                    <div class="flex gap-6">
-                      <input
-                        class="cursor-pointer outline-none bg-transparent text-xs"
-                        type="date"
-                        name="endDateResetReason"
-                        id="endDateResetReason"
-                        v-model="dataResetReasonEndDate"
-                      />
-                      <input
-                        class="cursor-pointer outline-none bg-transparent text-xs"
-                        type="time"
-                        name="endTimeResetReason"
-                        id="endTimeResetReason"
-                        v-model="endResetReasonTime"
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div class="w-fit">
-                  <BaseButton
-                    type="submit"
-                    class="primary"
-                    label="Filter"
-                    :loading="getTelemetryResetReasonLoading"
-                    @click="loadResetReasonData()"
-                  />
-                </div>
-              </div>
-            </div>
             <EasyDataTable
               :rows-per-page="10"
               table-class-name="customize-table"
-              :headers="historyResetReasonHeader"
-              :items="telemetryResetReasonData"
-              theme-color="#1363dF"
-              :loading="getTelemetryHistoryLoading"
-            >
-              <template #item-resetReason="item">
-                {{ getResetTitle(item.resetReason) }}
-              </template>
-              <template #item-description="item">
-                {{ getResetReasonDescription(item.resetReason) }}
-              </template>
-            </EasyDataTable>
-          </div>
-        </div>
-      </div>
-      <div
-        class="flex-1 m-[20px] flex h-[3000px] p-8 bg-bkg-primary rounded-[10px] shadow border border-bkg-secondary flex-col gap-14"
-      >
-        <div class="grid grid-cols-2">
-          <div class="flex flex-col gap-6 border-r mr-10">
-            <h1 class="text-accent-1 font-medium text-lg">Status</h1>
-            <div class="grid grid-cols-2">
-              <div class="flex flex-col gap-8">
-                <div class="flex flex-col gap-3 text-sm">
-                  <p class="text-label-primary">Last Heard</p>
-                  <p class="text-label-primary font-medium">{{ statusDeviceDetail._time }}</p>
-                </div>
-                <div class="flex flex-col gap-3 text-sm">
-                  <p class="text-label-primary">Temperature</p>
-                  <div class="flex gap-1 items-center">
-                    <img
-                      alt="telemetric logo"
-                      src="../assets/temp-icon.svg"
-                      width="32"
-                      height="32"
-                    />
-                    <p class="text-label-primary font-medium">
-                      {{ statusDeviceDetail.temperature }} °C
-                    </p>
-                  </div>
-                </div>
-                <div class="flex flex-col gap-3 text-sm">
-                  <p class="text-label-primary">Module 1</p>
-                  <div class="flex gap-3 items-center">
-                    <img
-                      alt="telemetric logo"
-                      src="../assets/module-icon.svg"
-                      width="20"
-                      height="20"
-                    />
-                    <p class="text-label-primary font-medium">{{ statusDeviceDetail.module1 }}</p>
-                  </div>
-                </div>
-              </div>
-              <div class="flex flex-col gap-8">
-                <div class="flex flex-col gap-3 text-sm">
-                  <p class="text-label-primary">Uptime</p>
-                  <p class="text-label-primary font-medium">{{ statusDeviceDetail.uptime }}</p>
-                </div>
-                <div class="flex flex-col gap-3 text-sm">
-                  <p class="text-label-primary">Humidity</p>
-                  <div class="flex gap-1 items-center">
-                    <img
-                      alt="telemetric logo"
-                      src="../assets/hum-icon.svg"
-                      width="32"
-                      height="32"
-                    />
-                    <p class="text-label-primary font-medium">
-                      {{ statusDeviceDetail.humidity }} %
-                    </p>
-                  </div>
-                </div>
-                <div class="flex flex-col gap-3 text-sm">
-                  <p class="text-label-primary">Module 2</p>
-                  <div class="flex gap-3 items-center">
-                    <img
-                      alt="telemetric logo"
-                      src="../assets/module-icon.svg"
-                      width="20"
-                      height="20"
-                    />
-                    <p class="text-label-primary font-medium">{{ statusDeviceDetail.module2 }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="flex flex-col gap-6">
-            <h1 class="text-accent-1 font-medium text-lg">Data Logs</h1>
-            <EasyDataTable
-              fixed-header
-              table-class-name="customize-table table-scroll"
-              :headers="header"
-              :items="deviceDataLogs"
-              hide-footer
+              :headers="historyHeader"
+              :items="telemetryData"
               theme-color="#1363df"
-              :loading="telemeryLoading"
-              sort-by="timestamp"
-              sort-type="desc"
-            >
-            </EasyDataTable>
+              :loading="getTelemetryHistoryLoading"
+            ></EasyDataTable>
           </div>
-        </div>
-
-        <div class="flex flex-col gap-4">
-          <h1 class="text-accent-1 font-medium text-lg">Historical Data</h1>
-          <div class="flex justify-between">
-            <div class="custom-select">
-              <select class="custom-select-option" name="type" id="type" v-model="selectedTag">
-                <option value="0" class="text-label-tertiary" disabled selected>Data Tag</option>
-                <option v-for="data in dataTags" :value="data">{{ data }}</option>
-              </select>
-            </div>
-            <div class="flex items-center">
-              <div class="grid grid-cols-2 gap-4">
-                <div
-                  class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
-                >
-                  <h2 class="font-semibold text-xs">From</h2>
-                  <div class="flex gap-6">
-                    <input
-                      class="cursor-pointer outline-none bg-transparent text-xs"
-                      type="date"
-                      name="startDate"
-                      id="startDate"
-                      v-model="startDate"
-                    />
-                    <input
-                      class="cursor-pointer outline-none bg-transparent text-xs"
-                      type="time"
-                      name="startTime"
-                      id="startTime"
-                      v-model="startTime"
-                    />
-                  </div>
-                </div>
-                <div
-                  class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
-                >
-                  <h2 class="font-semibold text-xs">To</h2>
-                  <div class="flex gap-6">
-                    <input
-                      class="cursor-pointer outline-none bg-transparent text-xs"
-                      type="date"
-                      name="endDate"
-                      id="endDate"
-                      v-model="endDate"
-                    />
-                    <input
-                      class="cursor-pointer outline-none bg-transparent text-xs"
-                      type="time"
-                      name="endTime"
-                      id="endTime"
-                      v-model="endTime"
-                    />
-                  </div>
-                </div>
-              </div>
-              <div class="w-fit">
-                <BaseButton
-                  type="submit"
-                  class="primary"
-                  label="Filter"
-                  :loading="getTelemetryHistoryLoading"
-                  @click="loadHistoricalData()"
-                />
-              </div>
-            </div>
-          </div>
-
-          <EasyDataTable
-            :rows-per-page="10"
-            table-class-name="customize-table"
-            :headers="historyHeader"
-            :items="telemetryData"
-            theme-color="#1363df"
-            :loading="getTelemetryHistoryLoading"
-          ></EasyDataTable>
         </div>
       </div>
     </div>

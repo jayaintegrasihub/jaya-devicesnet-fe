@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue'
 import IconButton from '@/components/input/IconButton.vue'
+import Tab from '@/components/tab/Tab.vue'
 import BaseIndicator from '@/components/indicator/BaseIndicator.vue'
 import { storeToRefs } from 'pinia'
 import router from '@/router'
@@ -8,6 +9,7 @@ import { useTelemetryStore } from '@/stores/telemetry/telemetry-store'
 import { useGatewaysStore } from '@/stores/master-data/gateways-store'
 import BaseButton from '@/components/input/BaseButton.vue'
 import SearchBar from '@/components/input/SearchBar.vue'
+import { useLocalStorage } from '@vueuse/core'
 
 const telemetryStore = useTelemetryStore()
 const {
@@ -30,6 +32,9 @@ onMounted(async () => {
   // telemetryStore.listenTelemetryDetail(props.id)
   gatewayStore.listenGatewayHealth(props.id)
   gatewayStore.getGatewayNodes(props.id)
+
+  var element = document.getElementById(selectedComponent.value)
+  element.classList.add('active')
 })
 
 onUnmounted(() => {
@@ -136,7 +141,32 @@ function getResetTitle(reason) {
       return 'Unknown Title'
   }
 }
+
+const selectedComponent = useLocalStorage('SelectedGatewayInformationTab', 'StatusInfo')
+const tabs = [
+  {
+    title: 'Status',
+    value: 'StatusInfo'
+  },
+  {
+    title: 'Data Analytics',
+    value: 'DataAnalyticsInfo'
+  }
+]
+
+function changeNavigation(navigation) {
+  var subNavs = document.getElementsByClassName('nav')
+  console.log(subNavs)
+  for (var i of subNavs) {
+    i.classList.remove('active')
+  }
+  console.log(navigation)
+  // event.target.classList.add("active")
+  event.target.className += ' active'
+  selectedComponent.value = navigation
+}
 </script>
+
 <template>
   <div class="flex relative">
     <SideNav :isDevicesManagementActive="true" />
@@ -224,179 +254,193 @@ function getResetTitle(reason) {
           </div>
         </div>
       </div>
-      <div
-        class="flex-1 m-[20px] flex h-[3000px] p-8 bg-bkg-primary rounded-[10px] shadow border border-bkg-secondary flex-col gap-5"
-      >
-        <div class="flex flex-col gap-6">
-          <h1 class="text-accent-1 font-medium text-lg">Data Analytics</h1>
-          <div class="flex flex-col gap-4">
-            <div class="flex justify-between mb-6">
-              <p class="font-semibold">Telemetry Data Reset Reason History</p>
-              <div class="flex items-center">
-                <div class="grid grid-cols-2 gap-4">
-                  <div
-                    class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
-                  >
-                    <h2 class="font-semibold text-xs">From</h2>
-                    <div class="flex gap-6">
-                      <input
-                        class="cursor-pointer outline-none bg-transparent text-xs"
-                        type="date"
-                        name="startDateResetReason"
-                        id="startDateResetReason"
-                        v-model="dataResetReasonStartDate"
-                      />
-                      <input
-                        class="cursor-pointer outline-none bg-transparent text-xs"
-                        type="time"
-                        name="startTimeResetReason"
-                        id="startTimeResetReason"
-                        v-model="startResetReasonTime"
-                      />
+      <div class="m-[20px] flex-1 rounded-[10px] flex-col gap-5 flex">
+        <div class="mx-[20px] grid grid-row gap-6 md:gap-10">
+          <div class="md:w-fit">
+            <Tab :tabs="tabs" @clicked="changeNavigation" />
+          </div>
+        </div>
+        <div
+          class="flex-1 m-[20px] flex h-[3000px] p-8 bg-bkg-primary rounded-[10px] mt-1 shadow border border-bkg-secondary flex-col gap-5"
+          :style="{ display: selectedComponent === 'DataAnalyticsInfo' ? 'block' : 'none' }"
+        >
+          <div class="flex flex-col gap-6">
+            <h1 class="text-accent-1 font-medium text-lg">Data Analytics</h1>
+            <div class="flex flex-col gap-4">
+              <div class="flex justify-between mb-6">
+                <p class="font-semibold">Telemetry Data Reset Reason History</p>
+                <div class="flex items-center">
+                  <div class="grid grid-cols-2 gap-4">
+                    <div
+                      class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
+                    >
+                      <h2 class="font-semibold text-xs">From</h2>
+                      <div class="flex gap-6">
+                        <input
+                          class="cursor-pointer outline-none bg-transparent text-xs"
+                          type="date"
+                          name="startDateResetReason"
+                          id="startDateResetReason"
+                          v-model="dataResetReasonStartDate"
+                        />
+                        <input
+                          class="cursor-pointer outline-none bg-transparent text-xs"
+                          type="time"
+                          name="startTimeResetReason"
+                          id="startTimeResetReason"
+                          v-model="startResetReasonTime"
+                        />
+                      </div>
+                    </div>
+                    <div
+                      class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
+                    >
+                      <h2 class="font-semibold text-xs">To</h2>
+                      <div class="flex gap-6">
+                        <input
+                          class="cursor-pointer outline-none bg-transparent text-xs"
+                          type="date"
+                          name="endDateResetReason"
+                          id="endDateResetReason"
+                          v-model="dataResetReasonEndDate"
+                        />
+                        <input
+                          class="cursor-pointer outline-none bg-transparent text-xs"
+                          type="time"
+                          name="endTimeResetReason"
+                          id="endTimeResetReason"
+                          v-model="endResetReasonTime"
+                        />
+                      </div>
                     </div>
                   </div>
-                  <div
-                    class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
-                  >
-                    <h2 class="font-semibold text-xs">To</h2>
-                    <div class="flex gap-6">
-                      <input
-                        class="cursor-pointer outline-none bg-transparent text-xs"
-                        type="date"
-                        name="endDateResetReason"
-                        id="endDateResetReason"
-                        v-model="dataResetReasonEndDate"
+                  <div class="w-fit">
+                    <BaseButton
+                      type="submit"
+                      class="primary"
+                      label="Filter"
+                      :loading="getTelemetryResetReasonLoading"
+                      @click="loadResetReasonData()"
+                    />
+                  </div>
+                </div>
+              </div>
+              <EasyDataTable
+                :rows-per-page="10"
+                table-class-name="customize-table"
+                :headers="historyResetReasonHeader"
+                :items="telemetryResetReasonData"
+                theme-color="#1363dF"
+                :loading="getTelemetryHistoryLoading"
+              >
+                <template #item-resetReason="item">
+                  {{ getResetTitle(item.resetReason) }}
+                </template>
+                <template #item-description="item">
+                  {{ getResetReasonDescription(item.resetReason) }}
+                </template>
+              </EasyDataTable>
+            </div>
+          </div>
+        </div>
+        <div
+          class="flex-1 m-[20px] flex h-[3000px] p-8 bg-bkg-primary rounded-[10px] mt-1 shadow border border-bkg-secondary flex-col gap-5"
+          :style="{ display: selectedComponent === 'StatusInfo' ? 'block' : 'none' }"
+        >
+          <div class="grid grid-cols-2">
+            <div class="flex flex-col gap-6 border-r mr-10">
+              <h1 class="text-accent-1 font-medium text-lg">Status</h1>
+              <div class="grid grid-cols-2">
+                <div class="flex flex-col gap-8">
+                  <div class="flex flex-col gap-3 text-sm">
+                    <p class="text-label-primary">Last Heard</p>
+                    <p class="text-label-primary font-medium">{{ gatewayHealth._time }}</p>
+                  </div>
+                  <div class="flex flex-col gap-3 text-sm">
+                    <p class="text-label-primary">Temperature</p>
+                    <div class="flex gap-1 items-center">
+                      <img
+                        alt="telemetric logo"
+                        src="../assets/temp-icon.svg"
+                        width="32"
+                        height="32"
                       />
-                      <input
-                        class="cursor-pointer outline-none bg-transparent text-xs"
-                        type="time"
-                        name="endTimeResetReason"
-                        id="endTimeResetReason"
-                        v-model="endResetReasonTime"
-                      />
+                      <p class="text-label-primary font-medium">
+                        {{ gatewayHealth.temperature }} °C
+                      </p>
                     </div>
                   </div>
                 </div>
-                <div class="w-fit">
-                  <BaseButton
-                    type="submit"
-                    class="primary"
-                    label="Filter"
-                    :loading="getTelemetryResetReasonLoading"
-                    @click="loadResetReasonData()"
-                  />
+                <div class="flex flex-col gap-8">
+                  <div class="flex flex-col gap-3 text-sm">
+                    <p class="text-label-primary">Uptime</p>
+                    <p class="text-label-primary font-medium">{{ gatewayHealth.uptime }}</p>
+                  </div>
+                  <div class="flex flex-col gap-3 text-sm">
+                    <p class="text-label-primary">Humidity</p>
+                    <div class="flex gap-1 items-center">
+                      <img
+                        alt="telemetric logo"
+                        src="../assets/hum-icon.svg"
+                        width="32"
+                        height="32"
+                      />
+                      <p class="text-label-primary font-medium">{{ gatewayHealth.humidity }} %</p>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
+            <div class="flex flex-col gap-6 hidden">
+              <h1 class="text-accent-1 font-medium text-lg">History Reset Reason</h1>
+              <EasyDataTable
+                :rows-per-page="10"
+                table-class-name="customize-table table-scroll"
+                :headers="historyResetReasonHeader"
+                :items="items"
+                theme-color="#1363df"
+              ></EasyDataTable>
+            </div>
+          </div>
+
+          <div class="flex flex-col gap-4 mt-4">
+            <h1 class="text-accent-1 font-medium text-lg">Nodes List</h1>
+            <div class="flex justify-between items-end">
+              <div class="w-fit">
+                <SearchBar
+                  class="outlined"
+                  v-model="searchValue"
+                  placeholder="Search by SN, alias ..."
+                />
+              </div>
+              <div class="flex items-center gap-2">
+                <p class="text-label-primary text-sm">Total Connected Nodes:</p>
+                <p v-if="!getGatewayNodesLoading" class="font-semibold text-lg">
+                  {{ gatewayNodes.length }}
+                </p>
+              </div>
+            </div>
             <EasyDataTable
+              :search-value="searchValue"
               :rows-per-page="10"
               table-class-name="customize-table"
-              :headers="historyResetReasonHeader"
-              :items="telemetryResetReasonData"
-              theme-color="#1363dF"
-              :loading="getTelemetryHistoryLoading"
+              :headers="nodeListHeader"
+              :items="gatewayNodes"
+              theme-color="#1363df"
+              :loading="getGatewayNodesLoading"
             >
-              <template #item-resetReason="item">
-                {{ getResetTitle(item.resetReason) }}
-              </template>
-              <template #item-description="item">
-                {{ getResetReasonDescription(item.resetReason) }}
+              <template #item-group="item">
+                <div class="flex gap-4 py-2">
+                  <div
+                    class="rounded-full px-4 py-2 bg-accent-1"
+                    v-for="(value, key) in item.group"
+                  >
+                    <div class="text-white">{{ key }} : {{ value }}</div>
+                  </div>
+                </div>
               </template>
             </EasyDataTable>
           </div>
-        </div>
-      </div>
-      <div
-        class="flex-1 m-[20px] flex h-[3000px] p-8 bg-bkg-primary rounded-[10px] shadow border border-bkg-secondary flex-col gap-5"
-      >
-        <div class="grid grid-cols-2">
-          <div class="flex flex-col gap-6 border-r mr-10">
-            <h1 class="text-accent-1 font-medium text-lg">Status</h1>
-            <div class="grid grid-cols-2">
-              <div class="flex flex-col gap-8">
-                <div class="flex flex-col gap-3 text-sm">
-                  <p class="text-label-primary">Last Heard</p>
-                  <p class="text-label-primary font-medium">{{ gatewayHealth._time }}</p>
-                </div>
-                <div class="flex flex-col gap-3 text-sm">
-                  <p class="text-label-primary">Temperature</p>
-                  <div class="flex gap-1 items-center">
-                    <img
-                      alt="telemetric logo"
-                      src="../assets/temp-icon.svg"
-                      width="32"
-                      height="32"
-                    />
-                    <p class="text-label-primary font-medium">{{ gatewayHealth.temperature }} °C</p>
-                  </div>
-                </div>
-              </div>
-              <div class="flex flex-col gap-8">
-                <div class="flex flex-col gap-3 text-sm">
-                  <p class="text-label-primary">Uptime</p>
-                  <p class="text-label-primary font-medium">{{ gatewayHealth.uptime }}</p>
-                </div>
-                <div class="flex flex-col gap-3 text-sm">
-                  <p class="text-label-primary">Humidity</p>
-                  <div class="flex gap-1 items-center">
-                    <img
-                      alt="telemetric logo"
-                      src="../assets/hum-icon.svg"
-                      width="32"
-                      height="32"
-                    />
-                    <p class="text-label-primary font-medium">{{ gatewayHealth.humidity }} %</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="flex flex-col gap-6 hidden">
-            <h1 class="text-accent-1 font-medium text-lg">History Reset Reason</h1>
-            <EasyDataTable
-              :rows-per-page="10"
-              table-class-name="customize-table table-scroll"
-              :headers="historyResetReasonHeader"
-              :items="items"
-              theme-color="#1363df"
-            ></EasyDataTable>
-          </div>
-        </div>
-
-        <div class="flex flex-col gap-4 mt-4">
-          <h1 class="text-accent-1 font-medium text-lg">Nodes List</h1>
-          <div class="flex justify-between items-end">
-            <div class="w-fit">
-              <SearchBar
-                class="outlined"
-                v-model="searchValue"
-                placeholder="Search by SN, alias ..."
-              />
-            </div>
-            <div class="flex items-center gap-2">
-              <p class="text-label-primary text-sm">Total Connected Nodes:</p>
-              <p v-if="!getGatewayNodesLoading" class="font-semibold text-lg">
-                {{ gatewayNodes.length }}
-              </p>
-            </div>
-          </div>
-          <EasyDataTable
-            :search-value="searchValue"
-            :rows-per-page="10"
-            table-class-name="customize-table"
-            :headers="nodeListHeader"
-            :items="gatewayNodes"
-            theme-color="#1363df"
-            :loading="getGatewayNodesLoading"
-          >
-            <template #item-group="item">
-              <div class="flex gap-4 py-2">
-                <div class="rounded-full px-4 py-2 bg-accent-1" v-for="(value, key) in item.group">
-                  <div class="text-white">{{ key }} : {{ value }}</div>
-                </div>
-              </div>
-            </template>
-          </EasyDataTable>
         </div>
       </div>
     </div>

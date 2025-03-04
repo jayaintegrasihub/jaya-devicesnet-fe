@@ -207,7 +207,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
       this.getYesterdayDataCompletenessLoading = true
       const queryParams = {}
       this.yesterdayDataCompleteness = null
-      queryParams.startTime = getDateNdaysAgo(1)
+      queryParams.startTime = getDateNdaysAgo(2)
       queryParams.endTime = new Date().toLocaleDateString('en-CA')
       queryParams.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone
       try {

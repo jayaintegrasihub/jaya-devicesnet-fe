@@ -71,15 +71,16 @@ async function getDataReport() {
   )
 }
 
-const now = new Date()
-const tomorrow = new Date(now)
-tomorrow.setDate(now.getDate() + 1)
-
-const startDate = ref(now.toLocaleDateString('en-CA'))
+const getDateNdaysAgo = (n) => {
+  const date = new Date()
+  date.setDate(date.getDate() - n)
+  return date.toLocaleDateString('en-CA')
+}
+const startDate = ref(getDateNdaysAgo(7))
 const startTime = ref(
   new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
 )
-const endDate = ref(tomorrow.toLocaleDateString('en-CA'))
+const endDate = ref(new Date().toLocaleDateString('en-CA'))
 const endTime = ref(
   new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
 )

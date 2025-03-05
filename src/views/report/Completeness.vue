@@ -32,7 +32,7 @@ const header = [
           <option value="0">Filter</option>
         </select>
         <div class="flex grow md:grow-0">
-          <BasicButton type="submit" class="primary" label="New Gateway" />
+          <BasicButton type="submit" class="primary" label="Filter" />
         </div>
       </div>
     </div>

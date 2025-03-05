@@ -11,7 +11,7 @@ export default {
   props: ['id'],
 
   setup(props) {
-    const selectedComponent = useLocalStorage('Completeness')
+    const selectedComponent = useLocalStorage('SelectedReportTab', 'Completeness')
     const tabs = [
       {
         title: 'Completeness',

@@ -9,7 +9,7 @@ export const useTenantsStore = defineStore('tenants', {
     status: ref({
       isError: null,
       message: null,
-      code: null,
+      code: null
     }),
     deleteTenantLoading: ref(false),
     createTenantLoading: ref(false),
@@ -26,8 +26,8 @@ export const useTenantsStore = defineStore('tenants', {
 
         this.tenants.map((item, index) => {
           item.no = index + 1
-          item.formattedCreatedAt = moment(item.createdAt).format("YYYY-MM-DD hh:mm")
-          item.formattedUpdatedAt = moment(item.updatedAt).format("YYYY-MM-DD hh:mm")
+          item.formattedCreatedAt = moment(item.createdAt).format('YYYY-MM-DD hh:mm')
+          item.formattedUpdatedAt = moment(item.updatedAt).format('YYYY-MM-DD hh:mm')
         })
         this.status.code = res.data.status
       } catch (err) {
@@ -87,6 +87,6 @@ export const useTenantsStore = defineStore('tenants', {
         this.status.code = err.response.data.status
         return err
       }
-    },
+    }
   }
 })

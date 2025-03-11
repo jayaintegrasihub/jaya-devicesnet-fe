@@ -163,7 +163,12 @@ onMounted(async () => {
           </div>
         </div>
         <div class="flex grow md:grow-0">
-          <BasicButton class="primary" label="Filter" @click="getDataReport()" />
+          <BasicButton
+            class="primary"
+            label="Filter"
+            @click="getDataReport()"
+            :disabled="labelFilterMachine == ' ' ? true : false"
+          />
         </div>
       </div>
     </div>

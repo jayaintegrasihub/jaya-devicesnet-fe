@@ -28,7 +28,6 @@ const header = [
 const tenantStore = useTenantsStore()
 const { tenants } = storeToRefs(useTenantsStore())
 const selectedTenant = useLocalStorage('SelectedTenantReport', '')
-const tenantId = ref('')
 
 async function initTenantsList() {
   await tenantStore.getTenants()
@@ -38,9 +37,6 @@ async function initTenantsList() {
   } else if (selectedTenant.value === '') {
     selectedTenant.value = tenants.value[0].name
   }
-
-  let searchTenantId = findByName(tenants.value, selectedTenant.value)
-  tenantId.value = searchTenantId.id
 }
 
 const typeStore = useTypesStore()
@@ -64,7 +60,7 @@ const { reportCompletenessSummary, isLoading } = storeToRefs(useReportStore())
 
 async function getDataReport() {
   await reportStore.getReportSummary(
-    tenantId.value,
+    selectedTenant.value,
     selectedDeviceType.value,
     new Date(startDate.value + 'T' + '00:00:00').toISOString(),
     new Date(endDate.value + 'T' + '00:00:00').toISOString()
@@ -95,10 +91,9 @@ onMounted(async () => {
           name="tenants"
           id="tenants"
           v-model="selectedTenant"
-          @change="initTelemetryData()"
         >
           <option value="none">none</option>
-          <option v-for="tenant in tenants" :value="tenant.name" v-bind:key="tenant.id">
+          <option v-for="tenant in tenants" :value="tenant.id" v-bind:key="tenant.id">
             {{ tenant.name }}
           </option>
         </select>

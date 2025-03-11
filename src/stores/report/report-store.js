@@ -20,13 +20,13 @@ export const useReportStore = defineStore('reports', {
       try {
         const res = await reportApi.getReportCompletenessSummary(tenantId, type, startTime, endTime)
         this.isLoading = false
-        this.reportCompletenessSummary = res.data.report.nodes
+        this.reportCompletenessSummary = res.data.completenessDevice.report
 
         this.reportCompletenessSummary.map((item, index) => {
           item.no = index + 1
-          item.formattedCreatedAt = moment(item.createdAt).format('YYYY-MM-DD hh:mm')
-          item.machine = item.alias
+          item.formattedCreatedAt = moment(item['_start']).format('YYYY-MM-DD hh:mm')
           item.actualDataCount = item.count
+          item.machine = res.data.completenessDevice.alias
           item.expectedDataCount = item.duration / 10
           item.uptime = Math.round(item.duration / 60)
           item.percentage = item.count / (item.duration / 10) + '%'

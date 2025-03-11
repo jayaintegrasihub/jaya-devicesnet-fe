@@ -15,6 +15,8 @@ export default {
   getReportCompletenessSpecific(machine, startTime, endTime) {
     let queryString = `startTime=${startTime}&endTime=${endTime}`
 
-    return apiClient.get(`telemetry/report-completeness/${machine}?${queryString}`)
+    return apiClient.get(
+      `telemetry/report-completeness/${machine}?${queryString}&timezone=Asia/Jakarta`
+    )
   }
 }

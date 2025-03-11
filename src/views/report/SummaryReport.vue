@@ -86,26 +86,15 @@ onMounted(async () => {
     <div class="flex flex-col md:flex-row gap-4 md:justify-between">
       <SearchBar v-model="searchValue" />
       <div class="grid grid-cols-2 md:flex gap-4 justify-end">
-        <select
-          class="select-option"
-          name="tenants"
-          id="tenants"
-          v-model="selectedTenant"
-        >
+        <select class="select-option" name="tenants" id="tenants" v-model="selectedTenant">
           <option value="none">none</option>
           <option v-for="tenant in tenants" :value="tenant.id" v-bind:key="tenant.id">
             {{ tenant.name }}
           </option>
         </select>
-        <select
-          class="select-option"
-          name="type"
-          id="type"
-          v-model="selectedDeviceType"
-          @change="initTypesList()"
-        >
+        <select class="select-option" name="type" id="type" v-model="selectedDeviceType">
           <option value="All">All</option>
-          <option v-for="data in types" :value="data.name" v-bind:key="data.id">
+          <option v-for="data in types" :value="data.id" v-bind:key="data.id">
             {{ data.name }}
           </option>
         </select>

@@ -165,6 +165,7 @@ onMounted(async () => {
         <div class="flex grow md:grow-0">
           <BasicButton
             class="primary"
+            :class="labelFilterMachine == ' ' ? '!cursor-not-allowed' : 'cursor-pointer'"
             label="Filter"
             @click="getDataReport()"
             :disabled="labelFilterMachine == ' ' ? true : false"

@@ -14,9 +14,10 @@ export default {
   },
   getReportCompletenessSpecific(machine, startTime, endTime) {
     let queryString = `startTime=${startTime}&endTime=${endTime}`
+    const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 
     return apiClient.get(
-      `telemetry/report-completeness/${machine}?${queryString}&timezone=Asia/Jakarta`
+      `telemetry/report-completeness/${machine}?${queryString}&timezone=${userTimeZone}`
     )
   }
 }

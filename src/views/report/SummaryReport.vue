@@ -21,7 +21,7 @@ const header = [
   { text: 'Machine', value: 'machine', sortable: true },
   { text: 'Actual Data Count', value: 'actualDataCount', sortable: true },
   { text: 'Expected Data Count', value: 'expectedDataCount', sortable: true },
-  { text: 'Uptime (minute)', value: 'uptime', sortable: true },
+  { text: 'Uptime (second)', value: 'uptime', sortable: true },
   { text: 'Percentage', value: 'percentage', sortable: true },
   { text: '', value: 'operation', width: 50 }
 ]

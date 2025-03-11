@@ -53,8 +53,8 @@ const { reportCompletenessSpecific, isLoading } = storeToRefs(useReportStore())
 async function getDataReport() {
   await reportStore.getReportSpecific(
     dataFilterMachine.value,
-    new Date(startDate.value).toISOString(),
-    new Date(endDate.value).toISOString()
+    new Date(startDate.value + 'T' + '00:00:00').toISOString(),
+    new Date(endDate.value + 'T' + '00:00:00').toISOString()
   )
 }
 

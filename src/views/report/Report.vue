@@ -1,21 +1,27 @@
 <script>
 import { onMounted } from 'vue'
 import Tab from '@/components/tab/Tab.vue'
-import Completeness from './Completeness.vue'
+import SummaryReport from './SummaryReport.vue'
+import SpecificReport from './SpecificReport.vue'
 import { useLocalStorage } from '@vueuse/core'
 export default {
   components: {
     Tab,
-    Completeness
+    SummaryReport,
+    SpecificReport
   },
   props: ['id'],
 
   setup(props) {
-    const selectedComponent = useLocalStorage('SelectedReportTab', 'Completeness')
+    const selectedComponent = useLocalStorage('SelectedReportTab', 'SummaryReport')
     const tabs = [
       {
-        title: 'Completeness',
-        value: 'Completeness'
+        title: 'Summary',
+        value: 'SummaryReport'
+      },
+      {
+        title: 'Specific',
+        value: 'SpecificReport'
       }
     ]
 
@@ -49,7 +55,7 @@ export default {
     <SideNav :isReport="true" />
     <div class="flex flex-col w-screen">
       <TopBar>
-        <p class="text-label-primary">Report</p>
+        <p class="text-label-primary">Data Completeness Report</p>
       </TopBar>
       <div
         class="m-[20px] flex-1 py-8 bg-bkg-primary rounded-[10px] shadow border border-bkg-secondary flex-col gap-5 flex"

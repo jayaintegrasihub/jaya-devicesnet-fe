@@ -60,14 +60,14 @@ const findByName = (array, name) => {
 }
 
 const reportStore = useReportStore()
-const { reportCompleteness, isLoading } = storeToRefs(useReportStore())
+const { reportCompletenessSummary, isLoading } = storeToRefs(useReportStore())
 
 async function getDataReport() {
-  await reportStore.getReport(
+  await reportStore.getReportSummary(
     tenantId.value,
     selectedDeviceType.value,
-    new Date(startDate.value + 'T' + startTime.value).toISOString(),
-    new Date(endDate.value + 'T' + endTime.value).toISOString()
+    new Date(startDate.value + 'T' + '00:00:00').toISOString(),
+    new Date(endDate.value + 'T' + '00:00:00').toISOString()
   )
 }
 
@@ -77,13 +77,7 @@ const getDateNdaysAgo = (n) => {
   return date.toLocaleDateString('en-CA')
 }
 const startDate = ref(getDateNdaysAgo(7))
-const startTime = ref(
-  new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
-)
 const endDate = ref(new Date().toLocaleDateString('en-CA'))
-const endTime = ref(
-  new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' })
-)
 
 onMounted(async () => {
   await initTenantsList()
@@ -92,7 +86,7 @@ onMounted(async () => {
 </script>
 <template>
   <alert message="" :modalActive="modalActive" isError="" @close="closeNotification" />
-  <div class="mx-8 grid grid-row gap-6 md:gap-10">
+  <div class="mx-8 grid grid-row gap-6 md:gap-4">
     <div class="flex flex-col md:flex-row gap-4 md:justify-between">
       <SearchBar v-model="searchValue" />
       <div class="grid grid-cols-2 md:flex gap-4 justify-end">
@@ -104,7 +98,9 @@ onMounted(async () => {
           @change="initTelemetryData()"
         >
           <option value="none">none</option>
-          <option v-for="tenant in tenants" :value="tenant.name">{{ tenant.name }}</option>
+          <option v-for="tenant in tenants" :value="tenant.name" v-bind:key="tenant.id">
+            {{ tenant.name }}
+          </option>
         </select>
         <select
           class="select-option"
@@ -114,7 +110,9 @@ onMounted(async () => {
           @change="initTypesList()"
         >
           <option value="All">All</option>
-          <option v-for="data in types" :value="data.name">{{ data.name }}</option>
+          <option v-for="data in types" :value="data.name" v-bind:key="data.id">
+            {{ data.name }}
+          </option>
         </select>
         <div class="grid grid-cols-2 gap-2">
           <div
@@ -128,13 +126,6 @@ onMounted(async () => {
                 name="startDateResetReason"
                 id="startDateResetReason"
                 v-model="startDate"
-              />
-              <input
-                class="cursor-pointer outline-none bg-transparent text-xs"
-                type="time"
-                name="startTimeResetReason"
-                id="startTimeResetReason"
-                v-model="startTime"
               />
             </div>
           </div>
@@ -150,13 +141,6 @@ onMounted(async () => {
                 id="endDateResetReason"
                 v-model="endDate"
               />
-              <input
-                class="cursor-pointer outline-none bg-transparent text-xs"
-                type="time"
-                name="endTimeResetReason"
-                id="endTimeResetReason"
-                v-model="endTime"
-              />
             </div>
           </div>
         </div>
@@ -170,7 +154,7 @@ onMounted(async () => {
     :rows-per-page="25"
     table-class-name="customize-table"
     :headers="header"
-    :items="reportCompleteness"
+    :items="reportCompletenessSummary"
     theme-color="#1363df"
     :search-value="searchValue"
     :loading="isLoading"

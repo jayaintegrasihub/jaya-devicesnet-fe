@@ -1,15 +1,20 @@
 import apiClient from '../api'
 
 export default {
-  getReportCompleteness(tenantId, type, startTime, endTime) {
+  getReportCompletenessSummary(tenantId, type, startTime, endTime) {
+    let queryString = ''
+
     if (type == 'All') {
-      const queryString = `tenantId=${tenantId}&startTime=${startTime}&endTime=${endTime}`
-
-      return apiClient.get(`telemetry/report-completeness/?${queryString}`)
+      queryString = `tenantId=${tenantId}&startTime=${startTime}&endTime=${endTime}`
     } else {
-      const queryString = `tenantId=${tenantId}&type=${type}&startTime=${startTime}&endTime=${endTime}`
-
-      return apiClient.get(`telemetry/report-completeness/?${queryString}`)
+      queryString = `tenantId=${tenantId}&type=${type}&startTime=${startTime}&endTime=${endTime}`
     }
+
+    return apiClient.get(`telemetry/report-completeness/?${queryString}`)
+  },
+  getReportCompletenessSpecific(machine, startTime, endTime) {
+    let queryString = `startTime=${startTime}&endTime=${endTime}`
+
+    return apiClient.get(`telemetry/report-completeness/${machine}?${queryString}`)
   }
 }

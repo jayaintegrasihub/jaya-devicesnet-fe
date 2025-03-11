@@ -27,9 +27,9 @@ export const useReportStore = defineStore('reports', {
           item.formattedCreatedAt = moment(item.createdAt).format('YYYY-MM-DD hh:mm')
           item.machine = item.alias
           item.actualDataCount = item.count
-          item.expectedDataCount = item.duration / 10
+          item.expectedDataCount = Math.round(item.duration / 10)
           item.uptime = Math.round(item.duration / 60)
-          item.percentage = Math.round(item.count / (item.duration / 10)) + '%'
+          item.percentage = Math.round(item.count / (item.duration / 10))*100 + '%'
         })
         this.status.code = res.data.status
       } catch (err) {
@@ -57,9 +57,9 @@ export const useReportStore = defineStore('reports', {
           item.formattedCreatedAt = moment(item['_start']).format('YYYY-MM-DD hh:mm')
           item.machine = res.data.completenessDevice.alias
           item.actualDataCount = item.count
-          item.expectedDataCount = item.duration / 10
+          item.expectedDataCount = Math.round(item.duration / 10)
           item.uptime = Math.round(item.duration / 60)
-          item.percentage = Math.round(item.count / (item.duration / 10)) + '%'
+          item.percentage = Math.round(item.count / (item.duration / 10))*100 + '%'
         })
         this.status.code = res.data.status
       } catch (err) {

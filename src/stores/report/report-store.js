@@ -29,7 +29,7 @@ export const useReportStore = defineStore('reports', {
           item.actualDataCount = item.count
           item.expectedDataCount = item.duration / 10
           item.uptime = Math.round(item.duration / 60)
-          item.percentage = item.count / (item.duration / 10) + '%'
+          item.percentage = Math.round(item.count / (item.duration / 10)) + '%'
         })
         this.status.code = res.data.status
       } catch (err) {
@@ -59,7 +59,7 @@ export const useReportStore = defineStore('reports', {
           item.actualDataCount = item.count
           item.expectedDataCount = item.duration / 10
           item.uptime = Math.round(item.duration / 60)
-          item.percentage = item.count / (item.duration / 10) + '%'
+          item.percentage = Math.round(item.count / (item.duration / 10)) + '%'
         })
         this.status.code = res.data.status
       } catch (err) {

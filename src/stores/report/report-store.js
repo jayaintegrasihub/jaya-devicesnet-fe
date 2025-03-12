@@ -24,14 +24,20 @@ export const useReportStore = defineStore('reports', {
 
         this.reportCompletenessSummary.map((item) => {
           item.machine = item.alias
-          item.report.map((item, index) => {
-            item.no = index + 1
-            item.formattedCreatedAt = moment(item['_start']).format('YYYY-MM-DD')
-            item.actualDataCount = item.count
-            item.uptime = item.duration
-            item.expectedDataCount = Math.round(item.duration / 10)
-          item.percentage = ((item.count / (item.duration / 10)) * 100).toFixed(1) + '%'
-          })
+          if (item.report.length !== 0) {
+            item.report.map((item, index) => {
+              item.no = index + 1
+              item.formattedCreatedAt = moment(item['_start']).format('YYYY-MM-DD')
+              item.actualDataCount = item.count
+              item.uptime = item.duration
+              item.expectedDataCount = Math.round(item.duration / 10)
+              item.percentage = Math.round(item.count / (item.duration / 10)) * 100 + '%'
+            })
+          } else {
+            this.reportCompletenessSummary = this.reportCompletenessSummary.filter(
+              (filter) => filter.id !== item.id
+            )
+          }
         })
         this.status.code = res.data.status
       } catch (err) {

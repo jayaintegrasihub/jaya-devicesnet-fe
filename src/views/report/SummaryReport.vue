@@ -15,7 +15,17 @@ const closeNotification = () => {
   modalActive.value = false
 }
 
-const header = [{ text: '', value: 'machine', sortable: true }]
+const header = [
+  { text: '', value: 'machine', sortable: true },
+  { text: '', value: 'spacer1'},
+  { text: '', value: 'spacer2'},
+  { text: '', value: 'spacer3'},
+  { text: '', value: 'spacer4'},
+  { text: '', value: 'spacer5'},
+  { text: '', value: 'spacer6'},
+  { text: '', value: 'spacer7'},
+  { text: '', value: 'spacer8'},
+]
 
 const headerExpand = [
   { text: 'No', value: 'no', sortable: true },
@@ -102,32 +112,18 @@ onMounted(async () => {
           </option>
         </select>
         <div class="grid grid-cols-2 gap-2">
-          <div
-            class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
-          >
+          <div class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit">
             <h2 class="font-semibold text-xs">From</h2>
             <div class="flex gap-6">
-              <input
-                class="cursor-pointer outline-none bg-transparent text-xs"
-                type="date"
-                name="startDateResetReason"
-                id="startDateResetReason"
-                v-model="startDate"
-              />
+              <input class="cursor-pointer outline-none bg-transparent text-xs" type="date" name="startDateResetReason"
+                id="startDateResetReason" v-model="startDate" />
             </div>
           </div>
-          <div
-            class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
-          >
+          <div class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit">
             <h2 class="font-semibold text-xs">To</h2>
             <div class="flex gap-6">
-              <input
-                class="cursor-pointer outline-none bg-transparent text-xs"
-                type="date"
-                name="endDateResetReason"
-                id="endDateResetReason"
-                v-model="endDate"
-              />
+              <input class="cursor-pointer outline-none bg-transparent text-xs" type="date" name="endDateResetReason"
+                id="endDateResetReason" v-model="endDate" />
             </div>
           </div>
         </div>
@@ -137,28 +133,14 @@ onMounted(async () => {
       </div>
     </div>
   </div>
-  <EasyDataTable
-    :rows-per-page="25"
-    table-class-name="customize-table"
-    :headers="header"
-    :items="reportCompletenessSummary"
-    theme-color="#1363df"
-    :search-value="searchValue"
-    :loading="isLoading"
-    style="margin-right: 20px; margin-left: 20px"
-  >
+  <EasyDataTable :rows-per-page="25" table-class-name="customize-table" :headers="header"
+    :items="reportCompletenessSummary" theme-color="#1363df" :search-value="searchValue" :loading="isLoading"
+    style="margin-right: 20px; margin-left: 20px">
     <template #expand="item">
       <div class="py-4">
-        <EasyDataTable
-          :rows-per-page="25"
-          table-class-name="customize-table"
-          :headers="headerExpand"
-          :items="item.report"
-          theme-color="#1363df"
-          :search-value="searchValue"
-          :loading="isLoading"
-          style="margin-right: 20px; margin-left: 20px"
-        ></EasyDataTable>
+        <EasyDataTable :rows-per-page="25" table-class-name="customize-table" :headers="headerExpand"
+          :items="item.report" theme-color="#1363df" :search-value="searchValue" :loading="isLoading"
+          style="margin-right: 20px; margin-left: 20px"></EasyDataTable>
       </div>
     </template>
   </EasyDataTable>

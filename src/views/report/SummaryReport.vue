@@ -10,6 +10,7 @@ import { onMounted, ref } from 'vue'
 //stores
 const modalActive = ref(false)
 const searchValue = ref()
+const notifFilterDate = ref(' ')
 
 const closeNotification = () => {
   modalActive.value = false
@@ -17,14 +18,14 @@ const closeNotification = () => {
 
 const header = [
   { text: '', value: 'machine', sortable: true },
-  { text: '', value: 'spacer1'},
-  { text: '', value: 'spacer2'},
-  { text: '', value: 'spacer3'},
-  { text: '', value: 'spacer4'},
-  { text: '', value: 'spacer5'},
-  { text: '', value: 'spacer6'},
-  { text: '', value: 'spacer7'},
-  { text: '', value: 'spacer8'},
+  { text: '', value: 'spacer1' },
+  { text: '', value: 'spacer2' },
+  { text: '', value: 'spacer3' },
+  { text: '', value: 'spacer4' },
+  { text: '', value: 'spacer5' },
+  { text: '', value: 'spacer6' },
+  { text: '', value: 'spacer7' },
+  { text: '', value: 'spacer8' }
 ]
 
 const headerExpand = [
@@ -77,6 +78,8 @@ async function getDataReport() {
     new Date(endDate.value + 'T' + '00:00:00').toISOString()
   )
 
+  notifFilterDate.value = ' '
+
   console.log(reportCompletenessSummary.value)
 }
 
@@ -92,6 +95,19 @@ onMounted(async () => {
   await initTenantsList()
   await initTypesList()
 })
+
+function checkRangeDate() {
+  const from = new Date(startDate.value)
+  const to = new Date(endDate.value)
+  const diffTime = to - from
+  const diffDays = diffTime / (1000 * 60 * 60 * 24)
+
+  if (diffDays > 7) {
+    notifFilterDate.value = 'The date range cannot exceed 1 week!'
+  } else {
+    notifFilterDate.value = ' '
+  }
+}
 </script>
 <template>
   <alert message="" :modalActive="modalActive" isError="" @close="closeNotification" />
@@ -111,36 +127,87 @@ onMounted(async () => {
             {{ data.name }}
           </option>
         </select>
-        <div class="grid grid-cols-2 gap-2">
-          <div class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit">
-            <h2 class="font-semibold text-xs">From</h2>
-            <div class="flex gap-6">
-              <input class="cursor-pointer outline-none bg-transparent text-xs" type="date" name="startDateResetReason"
-                id="startDateResetReason" v-model="startDate" />
+        <div>
+          <div class="grid grid-cols-2 gap-2">
+            <div
+              :class="notifFilterDate === ' ' ? 'border-[#D9D9D9]' : 'border-[#FF0000]'"
+              class="text-left flex items-center gap-2 border rounded-md p-2 w-fit"
+            >
+              <h2 class="font-semibold text-xs">From</h2>
+              <div class="flex gap-6">
+                <input
+                  class="cursor-pointer outline-none bg-transparent text-xs"
+                  type="date"
+                  name="startDateResetReason"
+                  id="startDateResetReason"
+                  v-model="startDate"
+                  @change="checkRangeDate()"
+                />
+              </div>
+            </div>
+            <div
+              :class="notifFilterDate === ' ' ? 'border-[#D9D9D9]' : 'border-[#FF0000]'"
+              class="text-left flex items-center gap-2 border rounded-md p-2 w-fit"
+            >
+              <h2 class="font-semibold text-xs">To</h2>
+              <div class="flex gap-6">
+                <input
+                  class="cursor-pointer outline-none bg-transparent text-xs"
+                  type="date"
+                  name="endDateResetReason"
+                  id="endDateResetReason"
+                  v-model="endDate"
+                  @change="checkRangeDate()"
+                />
+              </div>
             </div>
           </div>
-          <div class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit">
-            <h2 class="font-semibold text-xs">To</h2>
-            <div class="flex gap-6">
-              <input class="cursor-pointer outline-none bg-transparent text-xs" type="date" name="endDateResetReason"
-                id="endDateResetReason" v-model="endDate" />
-            </div>
-          </div>
+          <p
+            v-if="notifFilterDate !== ' '"
+            style="
+              color: red;
+              font-size: 11px;
+              margin-top: 2px;
+              margin-left: 2px;
+              position: absolute;
+            "
+          >
+            {{ notifFilterDate }}
+          </p>
         </div>
         <div class="flex grow md:grow-0">
-          <BasicButton class="primary" label="Filter" @click="getDataReport()" />
+          <BasicButton
+            class="primary"
+            label="Filter"
+            @click="getDataReport()"
+            :disabled="notifFilterDate !== ' ' ? true : false"
+          />
         </div>
       </div>
     </div>
   </div>
-  <EasyDataTable :rows-per-page="25" table-class-name="customize-table" :headers="header"
-    :items="reportCompletenessSummary" theme-color="#1363df" :search-value="searchValue" :loading="isLoading"
-    style="margin-right: 20px; margin-left: 20px">
+  <EasyDataTable
+    :rows-per-page="25"
+    table-class-name="customize-table"
+    :headers="header"
+    :items="reportCompletenessSummary"
+    theme-color="#1363df"
+    :search-value="searchValue"
+    :loading="isLoading"
+    style="margin-right: 20px; margin-left: 20px"
+  >
     <template #expand="item">
       <div class="py-4">
-        <EasyDataTable :rows-per-page="25" table-class-name="customize-table" :headers="headerExpand"
-          :items="item.report" theme-color="#1363df" :search-value="searchValue" :loading="isLoading"
-          style="margin-right: 20px; margin-left: 20px"></EasyDataTable>
+        <EasyDataTable
+          :rows-per-page="25"
+          table-class-name="customize-table"
+          :headers="headerExpand"
+          :items="item.report"
+          theme-color="#1363df"
+          :search-value="searchValue"
+          :loading="isLoading"
+          style="margin-right: 20px; margin-left: 20px"
+        ></EasyDataTable>
       </div>
     </template>
   </EasyDataTable>

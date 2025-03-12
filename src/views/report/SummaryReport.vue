@@ -15,16 +15,17 @@ const closeNotification = () => {
   modalActive.value = false
 }
 
-const header = [
+const header = [{ text: '', value: 'machine', sortable: true }]
+
+const headerExpand = [
   { text: 'No', value: 'no', sortable: true },
   { text: 'Date', value: 'formattedCreatedAt', sortable: true },
-  { text: 'Machine', value: 'machine', sortable: true },
   { text: 'Actual Data Count', value: 'actualDataCount', sortable: true },
   { text: 'Expected Data Count', value: 'expectedDataCount', sortable: true },
   { text: 'Uptime (second)', value: 'uptime', sortable: true },
-  { text: 'Percentage', value: 'percentage', sortable: true },
-  { text: '', value: 'operation', width: 50 }
+  { text: 'Percentage', value: 'percentage', sortable: true }
 ]
+
 const tenantStore = useTenantsStore()
 const { tenants } = storeToRefs(useTenantsStore())
 const selectedTenant = useLocalStorage('SelectedTenantReport', '')
@@ -65,6 +66,8 @@ async function getDataReport() {
     new Date(startDate.value + 'T' + '00:00:00').toISOString(),
     new Date(endDate.value + 'T' + '00:00:00').toISOString()
   )
+
+  console.log(reportCompletenessSummary.value)
 }
 
 const getDateNdaysAgo = (n) => {
@@ -94,7 +97,7 @@ onMounted(async () => {
         </select>
         <select class="select-option" name="type" id="type" v-model="selectedDeviceType">
           <option value="All">All</option>
-          <option v-for="data in types" :value="data.id" v-bind:key="data.id">
+          <option v-for="data in types" :value="data.name" v-bind:key="data.id">
             {{ data.name }}
           </option>
         </select>
@@ -143,7 +146,22 @@ onMounted(async () => {
     :search-value="searchValue"
     :loading="isLoading"
     style="margin-right: 20px; margin-left: 20px"
-  />
+  >
+    <template #expand="item">
+      <div class="py-4">
+        <EasyDataTable
+          :rows-per-page="25"
+          table-class-name="customize-table"
+          :headers="headerExpand"
+          :items="item.report"
+          theme-color="#1363df"
+          :search-value="searchValue"
+          :loading="isLoading"
+          style="margin-right: 20px; margin-left: 20px"
+        ></EasyDataTable>
+      </div>
+    </template>
+  </EasyDataTable>
 </template>
 
 <style scoped>

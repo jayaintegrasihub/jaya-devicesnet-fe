@@ -107,7 +107,7 @@ function checkRangeDate() {
   } else if (diffDays > 7) {
     notifFilterDate.value = 'The date range cannot exceed 1 week!'
   } else {
-    notifFilterDate.value = ''
+    notifFilterDate.value = ' '
   }
 }
 </script>

@@ -12,6 +12,7 @@ const openDropdownSearch = ref(false)
 const labelFilterMachine = ref(' ')
 const dataFilterMachine = ref('')
 const searchMachine = ref('')
+const notifFilterDate = ref(' ')
 
 const nodesStore = useNodesStore()
 const { nodes } = storeToRefs(useNodesStore())
@@ -56,6 +57,8 @@ async function getDataReport() {
     new Date(startDate.value + 'T' + '00:00:00').toISOString(),
     new Date(endDate.value + 'T' + '00:00:00').toISOString()
   )
+
+  notifFilterDate.value = ' '
 }
 
 const getDateNdaysAgo = (n) => {
@@ -69,6 +72,21 @@ const endDate = ref(new Date().toLocaleDateString('en-CA'))
 onMounted(async () => {
   await nodesStore.getNodes()
 })
+
+function checkRangeDate() {
+  const from = new Date(startDate.value)
+  const to = new Date(endDate.value)
+  const diffTime = to - from
+  const diffDays = diffTime / (1000 * 60 * 60 * 24)
+
+  if (diffDays < 0) {
+    notifFilterDate.value = "The 'To' date cannot be earlier than the 'From' date!"
+  } else if (diffDays > 30) {
+    notifFilterDate.value = 'The date range cannot exceed 1 month!'
+  } else {
+    notifFilterDate.value = ' '
+  }
+}
 </script>
 <template>
   <alert message="" :modalActive="modalActive" isError="" @close="closeNotification" />
@@ -132,35 +150,53 @@ onMounted(async () => {
             </ul>
           </div>
         </div>
-        <div class="grid grid-cols-2 gap-2">
-          <div
-            class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
-          >
-            <h2 class="font-semibold text-xs">From</h2>
-            <div class="flex gap-6">
-              <input
-                class="cursor-pointer outline-none bg-transparent text-xs"
-                type="date"
-                name="startDateResetReason"
-                id="startDateResetReason"
-                v-model="startDate"
-              />
+        <div>
+          <div class="grid grid-cols-2 gap-2">
+            <div
+              :class="notifFilterDate === ' ' ? 'border-[#D9D9D9]' : 'border-[#FF0000]'"
+              class="text-left flex items-center gap-2 border rounded-md p-2 w-fit"
+            >
+              <h2 class="font-semibold text-xs">From</h2>
+              <div class="flex gap-6">
+                <input
+                  class="cursor-pointer outline-none bg-transparent text-xs"
+                  type="date"
+                  name="startDateResetReason"
+                  id="startDateResetReason"
+                  v-model="startDate"
+                  @change="checkRangeDate()"
+                />
+              </div>
+            </div>
+            <div
+              :class="notifFilterDate === ' ' ? 'border-[#D9D9D9]' : 'border-[#FF0000]'"
+              class="text-left flex items-center gap-2 border rounded-md p-2 w-fit"
+            >
+              <h2 class="font-semibold text-xs">To</h2>
+              <div class="flex gap-6">
+                <input
+                  class="cursor-pointer outline-none bg-transparent text-xs"
+                  type="date"
+                  name="endDateResetReason"
+                  id="endDateResetReason"
+                  v-model="endDate"
+                  @change="checkRangeDate()"
+                />
+              </div>
             </div>
           </div>
-          <div
-            class="text-left flex items-center gap-2 border rounded-md border-[#D9D9D9] p-2 w-fit"
+          <p
+            v-if="notifFilterDate !== ' '"
+            style="
+              color: red;
+              font-size: 11px;
+              margin-top: 2px;
+              margin-left: 2px;
+              position: absolute;
+            "
           >
-            <h2 class="font-semibold text-xs">To</h2>
-            <div class="flex gap-6">
-              <input
-                class="cursor-pointer outline-none bg-transparent text-xs"
-                type="date"
-                name="endDateResetReason"
-                id="endDateResetReason"
-                v-model="endDate"
-              />
-            </div>
-          </div>
+            {{ notifFilterDate }}
+          </p>
         </div>
         <div class="flex grow md:grow-0">
           <BasicButton
@@ -168,7 +204,9 @@ onMounted(async () => {
             :class="labelFilterMachine == ' ' ? '!cursor-not-allowed' : 'cursor-pointer'"
             label="Filter"
             @click="getDataReport()"
-            :disabled="labelFilterMachine == ' ' ? true : false"
+            :disabled="
+              labelFilterMachine == ' ' ? true : false || notifFilterDate !== ' ' ? true : false
+            "
           />
         </div>
       </div>

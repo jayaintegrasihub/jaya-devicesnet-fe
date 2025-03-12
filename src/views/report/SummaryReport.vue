@@ -102,10 +102,12 @@ function checkRangeDate() {
   const diffTime = to - from
   const diffDays = diffTime / (1000 * 60 * 60 * 24)
 
-  if (diffDays > 7) {
+  if (diffDays < 0) {
+    notifFilterDate.value = "The 'To' date cannot be earlier than the 'From' date!"
+  } else if (diffDays > 7) {
     notifFilterDate.value = 'The date range cannot exceed 1 week!'
   } else {
-    notifFilterDate.value = ' '
+    notifFilterDate.value = ''
   }
 }
 </script>

@@ -12,7 +12,13 @@ export const useReportStore = defineStore('reports', {
       message: null,
       code: null
     }),
-    isLoading: ref(false)
+    statusExport: ref({
+      isError: null,
+      message: null,
+      code: null
+    }),
+    isLoading: ref(false),
+    isLoadingExport: ref(false)
   }),
   actions: {
     async getReportSummary(tenantId, type, startTime, endTime) {
@@ -48,15 +54,10 @@ export const useReportStore = defineStore('reports', {
         return err
       }
     },
-    async getReportSpecific(tenantId, type, startTime, endTime) {
+    async getReportSpecific(machine, startTime, endTime) {
       this.isLoading = true
       try {
-        const res = await reportApi.getReportCompletenessSpecific(
-          tenantId,
-          type,
-          startTime,
-          endTime
-        )
+        const res = await reportApi.getReportCompletenessSpecific(machine, startTime, endTime)
         this.isLoading = false
         this.reportCompletenessSpecific = res.data.completenessDevice.report
         console.log(res.data.completenessDevice.report)
@@ -75,6 +76,61 @@ export const useReportStore = defineStore('reports', {
         this.isLoading = false
         this.status.message = err.response.data.message
         this.status.code = err.response.data.status
+        return err
+      }
+    },
+    async exportReportSummary(tenantId, type, startTime, endTime) {
+      this.isLoadingExport = true
+      try {
+        const res = await reportApi.exportReportCompletenessSummary(
+          tenantId,
+          type,
+          startTime,
+          endTime
+        )
+        this.isLoadingExport = false
+
+        const href = window.URL.createObjectURL(res)
+        const link = document.createElement('a')
+        link.href = href
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        this.statusExport.message = 'Export data report successfully'
+        this.statusExport.code = 200
+        this.statusExport.isError = false
+      } catch (err) {
+        console.error(err)
+        this.isLoadingExport = false
+        this.statusExport.isError = true
+        this.statusExport.message = err.response.data.message
+        this.statusExport.code = err.response.data.statusExport
+        return err
+      }
+    },
+    async exportReportSpecific(machine, startTime, endTime) {
+      this.isLoadingExport = true
+      try {
+        const res = await reportApi.exportReportCompletenessSpecific(machine, startTime, endTime)
+        this.isLoadingExport = false
+
+        const href = window.URL.createObjectURL(res)
+        const link = document.createElement('a')
+        link.href = href
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        this.statusExport.message = 'Export data report successfully'
+        this.statusExport.code = 200
+        this.statusExport.isError = false
+      } catch (err) {
+        console.error(err)
+        this.isLoadingExport = false
+        this.statusExport.isError = true
+        this.statusExport.message = err.response.data.message
+        this.statusExport.code = err.response.data.statusExport
         return err
       }
     }

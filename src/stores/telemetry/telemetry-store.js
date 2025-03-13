@@ -10,7 +10,6 @@ const getDateNdaysAgo = (n) => {
   return date.toLocaleDateString('en-CA')
 }
 
-
 function rssiToDbm(rssi) {
   return -256 + rssi
 }
@@ -272,10 +271,10 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.totalOffline = this.offlineGateways + this.offlineNodes
         this.isThereOfflineGateway = this.offlineGatewaysList.length > 0
         this.isThereOfflineNode = this.offlineNodesList.length > 0
-        this.offlineDevices = this.offlineGatewaysList.concat(this.offlineNodesList)
-        this.offlineDevices.map((data) => {
-          data._time = new Date(data._time).toLocaleString()
-        })
+        // this.offlineDevices = this.offlineGatewaysList.concat(this.offlineNodesList)
+        // this.offlineDevices.map((data) => {
+        //   data._time = new Date(data._time).toLocaleString()
+        // })
         this.lastUpdated = new Date(this.eventData.statusDevices.timeNow).toLocaleString()
         this.gatewaysData = gateways
         this.gatewaysData.map((data) => {

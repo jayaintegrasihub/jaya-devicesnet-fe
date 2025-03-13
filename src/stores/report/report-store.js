@@ -88,18 +88,11 @@ export const useReportStore = defineStore('reports', {
           startTime,
           endTime
         )
-        this.isLoadingExport = false
-
-        const href = window.URL.createObjectURL(res)
-        const link = document.createElement('a')
-        link.href = href
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-
+        window.open(res.url)
         this.statusExport.message = 'Export data report successfully'
         this.statusExport.code = 200
         this.statusExport.isError = false
+        this.isLoadingExport = false
       } catch (err) {
         console.error(err)
         this.isLoadingExport = false
@@ -113,18 +106,11 @@ export const useReportStore = defineStore('reports', {
       this.isLoadingExport = true
       try {
         const res = await reportApi.exportReportCompletenessSpecific(machine, startTime, endTime)
-        this.isLoadingExport = false
-
-        const href = window.URL.createObjectURL(res)
-        const link = document.createElement('a')
-        link.href = href
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-
+        window.open(res.url)
         this.statusExport.message = 'Export data report successfully'
         this.statusExport.code = 200
         this.statusExport.isError = false
+        this.isLoadingExport = false
       } catch (err) {
         console.error(err)
         this.isLoadingExport = false

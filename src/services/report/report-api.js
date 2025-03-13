@@ -44,7 +44,7 @@ export default {
       `${import.meta.env.VITE_APP_API_URL}telemetry/export/report-completeness/?${queryString}`,
       requestOptions
     ).then((res) => {
-      return res.blob()
+      return res
     })
 
     return res
@@ -68,7 +68,7 @@ export default {
       }telemetry/export/report-completeness/${machine}?${queryString}&timezone=${userTimeZone}`,
       requestOptions
     ).then((res) => {
-      return res.blob()
+      return res
     })
 
     return res

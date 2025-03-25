@@ -480,7 +480,8 @@ function selectedNodesFwChanged() {
 
 function goToDeviceDetailPage(id) {
   console.log(id)
-  router.push({ name: 'deviceDetail', params: { id: id } })
+  const routerData = router.resolve({ name: 'deviceDetail', params: { id: id } })
+  window.open(routerData.href, '_blank')
 }
 
 function goToGatewayDetailPage(id) {

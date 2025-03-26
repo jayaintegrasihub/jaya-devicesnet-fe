@@ -259,7 +259,9 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.offlineGatewaysList = gateways.filter((data) => data.status === 'OFFLINE')
         let nodes = this.eventData.statusDevices.nodes
         let onlineNodesList = nodes.filter((data) => data.status === 'ONLINE')
-        this.offlineNodesList = nodes.filter((data) => data.status === 'OFFLINE')
+        this.offlineNodesList = nodes
+          .filter((data) => data.status === 'OFFLINE')
+          .sort((a, b) => new Date(b._time) - new Date(a._time))
         this.totalGateways = gateways.length
         this.totalNodes = nodes.length
         this.totalDevices = this.totalGateways + this.totalNodes

@@ -239,7 +239,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.statusDeviceDetail.rssi = Math.floor(rssiToDbm(this.statusDeviceDetail.rssi))
         this.deviceDataLogs = convertToArray(this.detailEventData.telemetry)
         this.deviceDataLogs.map((data) => {
-          data.timestamp = new Date(data.timestamp).toLocaleString()
+          data.timestamp = moment(data.timestamp).format('MM/DD/YYYY , HH:mm:ss')
         })
         this.dataTags = Object.keys(this.detailEventData.telemetry)
       }

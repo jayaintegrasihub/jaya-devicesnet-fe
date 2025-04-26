@@ -795,6 +795,7 @@ function getResetTitle(reason) {
             <div class="flex flex-col gap-2">
               <div class="flex justify-between items-center">
                 <p class="text-lg text-label-primary font-semibold">Offline Nodes</p>
+                <a class="text-md font-normal text-sky-500" href="/offline-nodes">details ></a>
               </div>
               <div class="flex flex-col gap-2 h-[280px] overflow-y-auto">
                 <div

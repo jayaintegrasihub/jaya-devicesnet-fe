@@ -290,7 +290,6 @@ export const useTelemetryStore = defineStore('Telemetry', {
 
         this.nodesData = nodes
         this.nodesData.map((data) => {
-          console.log('b', data._time)
 
           let parsedTime
 
@@ -309,7 +308,6 @@ export const useTelemetryStore = defineStore('Telemetry', {
           data.uptime = formatUptime(data.uptime)
           data.rssi = Math.floor(rssiToDbm(data.rssi))
 
-          console.log('a', data._time)
         })
 
         if (this.totalGateways === 0) {

@@ -46,6 +46,13 @@ const router = createRouter({
       meta: { requiresAuth: true },
       props: true,
       component: () => import('../views/GatewayDetail.vue')
+    },
+    {
+      path: '/offline-nodes',
+      name: 'offileNodes',
+      meta: { requiresAuth: true },
+      props: true,
+      component: () => import('../views/dashboard/offline-nodes/OfflineNodes.vue')
     }
   ]
 })

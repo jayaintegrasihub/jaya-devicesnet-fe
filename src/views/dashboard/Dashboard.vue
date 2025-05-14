@@ -480,7 +480,8 @@ function selectedNodesFwChanged() {
 
 function goToDeviceDetailPage(id) {
   console.log(id)
-  router.push({ name: 'deviceDetail', params: { id: id } })
+  const routerData = router.resolve({ name: 'deviceDetail', params: { id: id } })
+  window.open(routerData.href, '_blank')
 }
 
 function goToGatewayDetailPage(id) {
@@ -794,6 +795,7 @@ function getResetTitle(reason) {
             <div class="flex flex-col gap-2">
               <div class="flex justify-between items-center">
                 <p class="text-lg text-label-primary font-semibold">Offline Nodes</p>
+                <a class="text-md font-normal text-sky-500" href="/offline-nodes">details ></a>
               </div>
               <div class="flex flex-col gap-2 h-[280px] overflow-y-auto">
                 <div

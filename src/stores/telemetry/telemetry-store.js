@@ -239,7 +239,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.statusDeviceDetail.rssi = Math.floor(rssiToDbm(this.statusDeviceDetail.rssi))
         this.deviceDataLogs = convertToArray(this.detailEventData.telemetry)
         this.deviceDataLogs.map((data) => {
-          data.timestamp = new Date(data.timestamp).toLocaleString()
+          data.timestamp = moment(data.timestamp).format('MM/DD/YYYY , HH:mm:ss')
         })
         this.dataTags = Object.keys(this.detailEventData.telemetry)
       }
@@ -259,7 +259,9 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.offlineGatewaysList = gateways.filter((data) => data.status === 'OFFLINE')
         let nodes = this.eventData.statusDevices.nodes
         let onlineNodesList = nodes.filter((data) => data.status === 'ONLINE')
-        this.offlineNodesList = nodes.filter((data) => data.status === 'OFFLINE')
+        this.offlineNodesList = nodes
+          .filter((data) => data.status === 'OFFLINE')
+          .sort((a, b) => new Date(b._time) - new Date(a._time))
         this.totalGateways = gateways.length
         this.totalNodes = nodes.length
         this.totalDevices = this.totalGateways + this.totalNodes
@@ -288,7 +290,6 @@ export const useTelemetryStore = defineStore('Telemetry', {
 
         this.nodesData = nodes
         this.nodesData.map((data) => {
-          console.log('b', data._time)
 
           let parsedTime
 
@@ -307,7 +308,6 @@ export const useTelemetryStore = defineStore('Telemetry', {
           data.uptime = formatUptime(data.uptime)
           data.rssi = Math.floor(rssiToDbm(data.rssi))
 
-          console.log('a', data._time)
         })
 
         if (this.totalGateways === 0) {

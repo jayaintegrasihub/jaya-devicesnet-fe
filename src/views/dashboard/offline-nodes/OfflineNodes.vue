@@ -15,11 +15,11 @@ const selectedDeviceType = useLocalStorage('SelectedDeviceType', 'All')
 const telemetryStore = useTelemetryStore()
 const nodesStore = useNodesStore()
 const { node } = storeToRefs(useNodesStore())
-const { offlineNodesList } = storeToRefs(useTelemetryStore())
+const { offlineNodesList, lastUpdated } = storeToRefs(useTelemetryStore())
 const selectedOfflineDevice = ref('')
 const offlineDeviceDetailData = ref({})
 const isOfflineDetailPops = ref(false)
-const selectedGroupBy = ref('')
+const selectedGroupBy = ref([])
 const nodesOfflineGroupBy = ref([])
 const filterType = ref('filter')
 const filterMenu = ref(null);
@@ -28,28 +28,8 @@ const dataWithFilter = ref([])
 const filters = ref([
   { searchby: '', value: '' }
 ])
-const searchbyOptions = ['Division', 'Floor', 'MachineType', 'Tray']
+const filterbyOptions = ['Division', 'Floor', 'MachineType', 'Tray']
 const isFiltering = ref(false)
-
-
-const listGroupBy = [
-  {
-    value: 'Division',
-    label: 'Division'
-  },
-  {
-    value: 'Floor',
-    label: 'Floor'
-  },
-  {
-    value: 'MachineType',
-    label: 'Machine Type'
-  },
-  {
-    value: 'Tray',
-    label: 'Tray'
-  }
-]
 
 function goBack() {
   router.go(-1)
@@ -132,16 +112,36 @@ function getResetTitle(reason) {
   }
 }
 
-function removeGroupby() {
-  selectedGroupBy.value = ''
-  nodesOfflineGroupBy.value = []
+function removeGroupby(data) {
+  const index = selectedGroupBy.value.findIndex(item => item === data);
+  if (index !== -1) {
+    selectedGroupBy.value.splice(index, 1);
+  }
+
+  if (selectedGroupBy.value.length === 0) {
+    nodesOfflineGroupBy.value = [];
+    isFiltering.value = false;
+  } else {
+    const dataGroup = groupByMultiple(offlineNodesList.value, selectedGroupBy.value);
+    nodesOfflineGroupBy.value = dataGroup
+    isFiltering.value = true;
+  }
 }
 
 watch([offlineNodesList], ()=> {
   if(filterType.value === "filter") {
     filterAction()
   }else {
-    changeGroupby()
+    if (selectedGroupBy.value.length === 0) {
+      nodesOfflineGroupBy.value = []
+      isFiltering.value = false
+    } else {
+      const dataGroup = groupByMultiple(offlineNodesList.value, selectedGroupBy.value)
+      nodesOfflineGroupBy.value = dataGroup
+
+      console.log(dataGroup)
+      isFiltering.value = true
+    }
   }
 })
 
@@ -157,9 +157,21 @@ function changefilterType(){
   isFiltering.value = false
 }
 
-function groupBy(array, key) {
-  const map = array.reduce((acc, obj) => {
-    const groupKey = obj[key]
+function groupByMultiple(array, keys) {
+  if (keys.length === 0) return array
+
+  const [firstKey, ...restKeys] = keys
+
+  const grouped = array.reduce((acc, obj) => {
+    const rawGroupKey = obj[firstKey];
+
+    let groupKey = rawGroupKey;
+    if (firstKey === 'Floor' && rawGroupKey != null) {
+      groupKey = `Floor ${rawGroupKey}`;
+    } else if (rawGroupKey == null) {
+      groupKey = 'Unknown';
+    }
+
     if (!acc[groupKey]) {
       acc[groupKey] = []
     }
@@ -167,26 +179,36 @@ function groupBy(array, key) {
     return acc
   }, {})
 
-  return Object.keys(map).map(groupKey => ({
-    group: groupKey,
-    items: map[groupKey]
+  return Object.entries(grouped).map(([group, items]) => ({
+    group,
+    items: groupByMultiple(items, restKeys) // <== REKURSIF
   }))
 }
 
-
 function changeGroupby(data) {
-  if (selectedGroupBy.value == data.label) {
-    selectedGroupBy.value = ''
+  const index = selectedGroupBy.value.findIndex(item => item === data)
+
+  if (index !== -1) {
+    selectedGroupBy.value.splice(index, 1)
+  } else {
+    if (selectedGroupBy.value.length >= 2) {
+      selectedGroupBy.value.shift()
+    }
+    selectedGroupBy.value.push(data)
+  }
+
+  if (selectedGroupBy.value.length === 0) {
     nodesOfflineGroupBy.value = []
     isFiltering.value = false
   } else {
-    selectedGroupBy.value = data.label
+    const dataGroup = groupByMultiple(offlineNodesList.value, selectedGroupBy.value)
+    nodesOfflineGroupBy.value = dataGroup
 
-    const dataGroupBy = groupBy(offlineNodesList.value, data.value)
-    nodesOfflineGroupBy.value = dataGroupBy
+    console.log(dataGroup)
     isFiltering.value = true
   }
 }
+
 
 function isOptionDisabled(option, currentIndex) {
   return filters.value.some((filter, idx) => filter.searchby === option && idx !== currentIndex);
@@ -232,8 +254,6 @@ function filterAction(){
     const dataFilter = multipleFilter(offlineNodesList.value, filters.value);
     dataWithFilter.value = dataFilter
     isFiltering.value = true
-
-    console.log(dataFilter)
   } else {
     dataWithFilter.value = [];
     isFiltering.value = false
@@ -263,6 +283,9 @@ function filterAction(){
           <p class="text-label-primary select-none">Offline Nodes</p>
         </div>
       </TopBar>
+      <div class="flex justify-end mx-[25px] mt-5">
+        <p class="text-sm text-label-secondary">Last Updated: {{ lastUpdated }}</p>
+      </div>
       <div
         class="m-[20px] flex-1 py-8 bg-bkg-primary rounded-[10px] shadow border border-bkg-secondary flex-col gap-5 flex"
       >
@@ -320,7 +343,7 @@ function filterAction(){
                             <select v-model="filter.searchby" class="border p-2 rounded">
                               <option disabled value="">Choose Search By</option>
                               <option 
-                                v-for="option in searchbyOptions" 
+                                v-for="option in filterbyOptions" 
                                 :key="option" 
                                 :value="option"
                                 :disabled="isOptionDisabled(option, index)"
@@ -350,11 +373,12 @@ function filterAction(){
                       <h1 class="text-label-primary text-sm font-medium">Group By</h1>
                       <div class="flex gap-1">
                         <div
-                          @click="removeGroupby()"
-                          v-if="selectedGroupBy !== ''"
+                          @click="removeGroupby(data)"
+                          v-if="selectedGroupBy.length !== 0"
+                          v-for="data in selectedGroupBy"
                           class="bg-[#E2EBF6] border text-[#3962EB] px-2 py-1 rounded-full cursor-pointer text-xs font-sembold"
                         >
-                          {{ selectedGroupBy }}
+                          {{ data }}
                         </div>
                       </div>
                       <div class="dropdown">
@@ -375,17 +399,17 @@ function filterAction(){
                           />
                         </div>
                         <div class="dropdown-content" style="left: -100px">
-                          <div v-for="(option, index) in listGroupBy" :key="index" class="">
+                          <div v-for="(data, index) in filterbyOptions" :key="index" class="">
                             <label class="cursor-pointer select-none">
                               <div
                                 :class="
-                                  selectedGroupBy === option.label && 'text-[#3962EB] bg-bkg-tertiary'
+                                  selectedGroupBy === data && 'text-[#3962EB] bg-bkg-tertiary'
                                 "
                                 class="font-normal text-sm rounded-lg w-full h-6 bg-bkg-primary"
-                                @click="changeGroupby(option)"
+                                @click="changeGroupby(data)"
                               >
                                 <p class="h-full flex items-center justify-center">
-                                  {{ option.label }}
+                                  {{ data }}
                                 </p>
                               </div>
                             </label>
@@ -555,7 +579,7 @@ function filterAction(){
                   </div>
                 </div>
 
-                <div v-if="nodesOfflineGroupBy.length > 0">
+                <div v-if="selectedGroupBy.length == 1">
                   <div
                     v-for="(value, key) in nodesOfflineGroupBy"
                     class="flex flex-col gap-4 mb-10"
@@ -640,6 +664,111 @@ function filterAction(){
                               <p class="font-semibold opacity-90">
                                 {{ data.uptime }}
                               </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-if="selectedGroupBy.length > 1" class="flex flex-col gap-4">
+                  <div
+                    v-for="(outerGroup, outerKey) in nodesOfflineGroupBy"
+                    :key="outerKey"
+                    class="rounded-[16px] bg-bkg-secondary p-[10px] flex flex-col gap-4 max-h-[800px] min-h-[200px] overflow-y-scroll overflow-x-visible"
+                  >
+                    <div class="p-[6px] flex align-center justify-between">
+                      <h1 class="text-label-primary font-semibold text-normal">
+                        ({{ outerGroup.group }})
+                      </h1>
+                      <h1 class="text-label-primary font-semibold text-normal">
+                        ({{ outerGroup.items.length }})
+                      </h1>
+                    </div>
+                    <div
+                      v-for="(innerGroup, innerKey) in outerGroup.items"
+                      :key="innerKey"
+                      class="bg-bkg-primary p-[10px] rounded-[11px] border border-bkg-tertiary"
+                    >
+                      <div class="p-[6px] flex align-center justify-between">
+                        <h1 class="text-label-primary font-semibold text-normal">
+                          ({{ innerGroup.group }})
+                        </h1>
+                        <h1 class="text-label-primary font-semibold text-normal">
+                          ({{ innerGroup.items.length }})
+                        </h1>
+                      </div>
+                      <div class="grid grid-cols-3 gap-2">
+                        <div
+                          v-for="(data, index) in innerGroup.items"
+                          @click="showOfflineNodeDetail(data.id)"
+                          :key="index"
+                          class="cursor-pointer bg-var-red rounded-[4px] px-[20px] py-[20px] text-white flex flex-col gap-2 justify-start over"
+                        >
+                          <div class="flex justify-between cursor-pointer">
+                            <!-- <p class="text-sm">{{ data.device }}</p> -->
+                            <p class="text-xs cursor-pointer">Last Heard: {{ data.lastHeard }}</p>
+                          </div>
+                          <label class="text-sm font-semibold cursor-pointer"
+                            >{{ data.alias }} - {{ data.device }}</label
+                          >
+                          <div class="grid grid-cols-1 xl:grid-cols-2 justify-between">
+                            <div class="flex flex-col gap-1">
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="font-medium opacity-80">Humidity:</p>
+                                <p class="font-semibold opacity-90">{{ data.humidity }}%</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="font-medium opacity-80">Temperature:</p>
+                                <p class="font-semibold opacity-90">{{ data.temperature }}°C</p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
+                                <div class="flex flex-col gap-1">
+                                  <p class="font-medium opacity-80">Reset Reason</p>
+                                  <p class="font-semibold opacity-90">
+                                    {{ getResetTitle(data.resetReason) }}
+                                  </p>
+                                </div>
+                                <div class="dropdown">
+                                  <img
+                                    src="../../../assets/info-icon.svg"
+                                    alt=""
+                                    height="14px"
+                                    width="14px"
+                                    class="cursor-pointer"
+                                  />
+                                  <div class="text-label-primary dropdown-content w-full">
+                                    {{ getResetReasonDescription(data.resetReason) }}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                            <div class="flex flex-col gap-1">
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="font-medium opacity-80">Fw Version:</p>
+                                <p class="font-semibold opacity-90">
+                                  {{ data.fwVersion }}
+                                </p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="font-medium opacity-80">Hw Version:</p>
+                                <p class="font-semibold opacity-90">
+                                  {{ data.hwVersion }}
+                                </p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="font-medium opacity-80">Lora dBm:</p>
+                                <p class="font-semibold opacity-90">
+                                  {{ data.rssi }}
+                                </p>
+                              </div>
+                              <div class="flex text-[10px] sm:text-xs md:text-sm gap-1">
+                                <p class="font-medium opacity-80">Uptime:</p>
+                                <p class="font-semibold opacity-90">
+                                  {{ data.uptime }}
+                                </p>
+                              </div>
                             </div>
                           </div>
                         </div>

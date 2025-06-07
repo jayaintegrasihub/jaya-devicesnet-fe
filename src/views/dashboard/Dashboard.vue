@@ -7,7 +7,7 @@ import SearchBar from '@/components/input/SearchBar.vue'
 import { useThemeStore } from '@/stores/theme'
 import SignalIndicator from '@/components/indicator/SignalIndicator.vue'
 import { useTenantsStore } from '@/stores/master-data/tenants-store'
-import { useLocalStorage } from '@vueuse/core'
+import { useClipboard, useLocalStorage } from '@vueuse/core'
 import { useTypesStore } from '@/stores/master-data/types-store'
 import OfflineDeviceDetail from '@/components/modal/OfflineDeviceDetail.vue'
 import { useNodesStore } from '@/stores/master-data/nodes-store'
@@ -106,6 +106,9 @@ const groupedGatewaysData = ref({})
 const gatewaysGroupBy = useLocalStorage('GatewaysGroupBy', [])
 const groupedNodesData = ref({})
 const nodesGroupBy = useLocalStorage('NodesGroupBy', [])
+const hover = ref(false)
+const imageSNCopy = ref('src/assets/copy-icon-inactive.svg')
+const { text, copy, copied } = useClipboard()
 
 // Watch for changes in nodesGroupBy
 watch(
@@ -124,6 +127,15 @@ watch(
   },
   { deep: true }
 )
+
+function hoverSNCopy() {
+  hover.value = !hover.value
+  if (hover.value) {
+    imageSNCopy.value = 'src/assets/copy-icon-active.svg'
+  } else {
+    imageSNCopy.value = 'src/assets/copy-icon-inactive.svg'
+  }
+}
 
 function groupingGatewaysData() {
   if (gatewaysGroupBy.value.length === 0) {
@@ -957,6 +969,20 @@ function getResetTitle(reason) {
                               <h2 class="font-semibold text-label-primary opacity-90">
                                 {{ data.device }}
                               </h2>
+                              <div class="dropdown" @click.stop.prevent="copy(data.device)">
+                                <img
+                                  @mouseover="hoverSNCopy"
+                                  @mouseleave="hoverSNCopy"
+                                  :src="imageSNCopy"
+                                  alt=""
+                                  height="14px"
+                                  width="14px"
+                                  class="cursor-pointer"
+                                />
+                                <div class="dropdown-content w-full">
+                                  {{ copied ? 'Text copied!' : 'Copy text!' }}
+                                </div>
+                              </div>
                             </div>
                             <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
                               <div class="flex flex-col gap-1">
@@ -1077,6 +1103,20 @@ function getResetTitle(reason) {
                               <h2 class="font-semibold text-label-primary opacity-90">
                                 {{ data.device }}
                               </h2>
+                              <div class="dropdown" @click.stop.prevent="copy(data.device)">
+                                <img
+                                  @mouseover="hoverSNCopy"
+                                  @mouseleave="hoverSNCopy"
+                                  :src="imageSNCopy"
+                                  alt=""
+                                  height="14px"
+                                  width="14px"
+                                  class="cursor-pointer"
+                                />
+                                <div class="dropdown-content w-full">
+                                  {{ copied ? 'Text copied!' : 'Copy text!' }}
+                                </div>
+                              </div>
                             </div>
                             <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
                               <div class="flex flex-col gap-1">
@@ -1207,6 +1247,20 @@ function getResetTitle(reason) {
                                   <h2 class="font-semibold text-label-primary opacity-90">
                                     {{ data.device }}
                                   </h2>
+                                  <div class="dropdown" @click.stop.prevent="copy(data.device)">
+                                    <img
+                                      @mouseover="hoverSNCopy"
+                                      @mouseleave="hoverSNCopy"
+                                      :src="imageSNCopy"
+                                      alt=""
+                                      height="14px"
+                                      width="14px"
+                                      class="cursor-pointer"
+                                    />
+                                    <div class="dropdown-content w-full">
+                                      {{ copied ? 'Text copied!' : 'Copy text!' }}
+                                    </div>
+                                  </div>
                                 </div>
                                 <div
                                   class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center"
@@ -1439,6 +1493,20 @@ function getResetTitle(reason) {
                               <h2 class="font-semibold text-label-primary opacity-90">
                                 {{ data.device }}
                               </h2>
+                              <div class="dropdown" @click.stop.prevent="copy(data.device)">
+                                <img
+                                  @mouseover="hoverSNCopy"
+                                  @mouseleave="hoverSNCopy"
+                                  :src="imageSNCopy"
+                                  alt=""
+                                  height="14px"
+                                  width="14px"
+                                  class="cursor-pointer"
+                                />
+                                <div class="dropdown-content w-full">
+                                  {{ copied ? 'Text copied!' : 'Copy text!' }}
+                                </div>
+                              </div>
                             </div>
                             <div class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center">
                               <div class="flex flex-col gap-1">
@@ -1579,6 +1647,20 @@ function getResetTitle(reason) {
                                 <h2 class="font-semibold text-label-primary opacity-90">
                                   {{ data.device }}
                                 </h2>
+                                <div class="dropdown" @click.stop.prevent="copy(data.device)">
+                                  <img
+                                    @mouseover="hoverSNCopy"
+                                    @mouseleave="hoverSNCopy"
+                                    :src="imageSNCopy"
+                                    alt=""
+                                    height="14px"
+                                    width="14px"
+                                    class="cursor-pointer"
+                                  />
+                                  <div class="dropdown-content w-full">
+                                    {{ copied ? 'Text copied!' : 'Copy text!' }}
+                                  </div>
+                                </div>
                               </div>
                               <div
                                 class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center"
@@ -1702,6 +1784,20 @@ function getResetTitle(reason) {
                                     <h2 class="font-semibold text-label-primary opacity-90">
                                       {{ data.device }}
                                     </h2>
+                                    <div class="dropdown" @click.stop.prevent="copy(data.device)">
+                                      <img
+                                        @mouseover="hoverSNCopy"
+                                        @mouseleave="hoverSNCopy"
+                                        :src="imageSNCopy"
+                                        alt=""
+                                        height="14px"
+                                        width="14px"
+                                        class="cursor-pointer"
+                                      />
+                                      <div class="dropdown-content w-full">
+                                        {{ copied ? 'Text copied!' : 'Copy text!' }}
+                                      </div>
+                                    </div>
                                   </div>
                                   <div
                                     class="flex text-[10px] sm:text-xs md:text-sm gap-1 items-center"

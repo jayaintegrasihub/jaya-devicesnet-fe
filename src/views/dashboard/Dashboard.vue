@@ -107,7 +107,9 @@ const gatewaysGroupBy = useLocalStorage('GatewaysGroupBy', [])
 const groupedNodesData = ref({})
 const nodesGroupBy = useLocalStorage('NodesGroupBy', [])
 const hover = ref(false)
-const imageSNCopy = ref('src/assets/copy-icon-inactive.svg')
+import copyIconActive from '@/assets/copy-icon-active.svg'
+import copyIconInactive from '@/assets/copy-icon-inactive.svg'
+const imageSNCopy = ref(copyIconInactive)
 const { text, copy, copied } = useClipboard()
 
 // Watch for changes in nodesGroupBy
@@ -131,9 +133,9 @@ watch(
 function hoverSNCopy() {
   hover.value = !hover.value
   if (hover.value) {
-    imageSNCopy.value = 'src/assets/copy-icon-active.svg'
+    imageSNCopy.value = copyIconActive
   } else {
-    imageSNCopy.value = 'src/assets/copy-icon-inactive.svg'
+    imageSNCopy.value = copyIconInactive
   }
 }
 

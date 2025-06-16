@@ -22,6 +22,7 @@ import {
   LineElement,
   LinearScale
 } from 'chart.js'
+import { useLoadingStore } from '@/stores/loading-store'
 Chart.register(
   BarElement,
   BarController,
@@ -48,9 +49,11 @@ const {
   getTelemetryHistoryLoading,
   statusDeviceDetail,
   deviceDataLogs,
-  dataTags
+  dataTags,
+  statusExport
 } = storeToRefs(useTelemetryStore())
 const props = defineProps(['id'])
+const loadingStore = useLoadingStore()
 
 function goBack() {
   router.go(-1)
@@ -109,7 +112,7 @@ const historyResetReasonHeader = [
   { text: 'Description', value: 'description', sortable: true }
 ]
 
-const selectedTag = useLocalStorage('selectedTag', '0')
+const selectedTag = ref('0')
 
 const getDateNdaysAgo = (n) => {
   const date = new Date()
@@ -149,6 +152,12 @@ const getYesterday = () => {
 
 let yesterdayDate = getYesterday()
 
+const modalActive = ref(false)
+
+const closeNotification = () => {
+  modalActive.value = false
+}
+
 async function loadHistoricalData() {
   const queryParams = {}
 
@@ -157,6 +166,21 @@ async function loadHistoricalData() {
     queryParams.startTime = new Date(startDate.value + 'T' + startTime.value).toISOString()
     queryParams.endTime = new Date(endDate.value + 'T' + endTime.value).toISOString()
     await telemetryStore.getTelemetryHistory(props.id, queryParams)
+  }
+}
+
+async function exportHistoricalData() {
+  const queryParams = {}
+
+  if (telemetryData.length !== 0) {
+    loadingStore.startLoading()
+    queryParams.fields = selectedTag.value
+    queryParams.startTime = new Date(startDate.value + 'T' + startTime.value).toISOString()
+    queryParams.endTime = new Date(endDate.value + 'T' + endTime.value).toISOString()
+    await telemetryStore.exportTemetryHistory(props.id, queryParams)
+    loadingStore.stopLoading()
+
+    modalActive.value = true
   }
 }
 
@@ -399,6 +423,12 @@ export default {
 </script>
 
 <template>
+  <alert
+    :message="statusExport.message"
+    :modalActive="modalActive"
+    :isError="statusExport.isError"
+    @close="closeNotification"
+  />
   <div class="flex relative">
     <SideNav :isDevicesManagementActive="true" />
     <div class="flex flex-col w-screen">
@@ -800,7 +830,30 @@ export default {
             </div>
           </div>
           <div class="flex flex-col gap-4 mt-12">
-            <h1 class="text-accent-1 font-medium text-lg">Historical Data</h1>
+            <div class="flex justify-between mb-5">
+              <h1 class="text-accent-1 font-medium text-lg">Historical Data</h1>
+              <div
+                class="flex grow md:grow-0 items-center p-3 rounded-md cursor-pointer hover:scale-110 duration-200 w-[100px] absolute right-16"
+                style="background-color: #f6f6f9"
+                :class="telemetryData.length === 0 ? '!cursor-not-allowed' : 'cursor-pointer'"
+                @click="exportHistoricalData()"
+              >
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M20.8195 17.7516H19.5586C19.4602 17.7516 19.3781 17.8336 19.3781 17.932V19.3805H4.61953V4.61953H19.3805V6.06797C19.3805 6.16641 19.4625 6.24844 19.5609 6.24844H20.8219C20.9203 6.24844 21.0023 6.16875 21.0023 6.06797V3.71953C21.0023 3.32109 20.6813 3 20.2828 3H3.71953C3.32109 3 3 3.32109 3 3.71953V20.2805C3 20.6789 3.32109 21 3.71953 21H20.2805C20.6789 21 21 20.6789 21 20.2805V17.932C21 17.8312 20.918 17.7516 20.8195 17.7516ZM21.2555 11.8523L17.9297 9.22734C17.8055 9.12891 17.625 9.21797 17.625 9.375V11.1562H10.2656C10.1625 11.1562 10.0781 11.2406 10.0781 11.3438V12.6562C10.0781 12.7594 10.1625 12.8438 10.2656 12.8438H17.625V14.625C17.625 14.782 17.8078 14.8711 17.9297 14.7727L21.2555 12.1477C21.2779 12.1301 21.296 12.1077 21.3085 12.0821C21.3209 12.0565 21.3274 12.0285 21.3274 12C21.3274 11.9715 21.3209 11.9435 21.3085 11.9179C21.296 11.8923 21.2779 11.8699 21.2555 11.8523Z"
+                    fill-opacity="1"
+                    fill="#0989c0"
+                  />
+                </svg>
+                <p class="ml-2" style="color: #0989c0; font-size: 14px; font-weight: 600">Export</p>
+              </div>
+            </div>
             <div class="flex justify-between">
               <div class="custom-select">
                 <select class="custom-select-option" name="type" id="type" v-model="selectedTag">

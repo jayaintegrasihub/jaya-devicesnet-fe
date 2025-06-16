@@ -71,6 +71,7 @@ export const useTelemetryStore = defineStore('Telemetry', {
     gatewaysData: ref([]),
     nodesData: ref([]),
     telemetryData: ref([]),
+    exportData: ref([]),
     telemetryResetReasonData: ref([]),
     telemetryDataCompleteness: ref(),
     offlineNodesList: ref([]),
@@ -104,7 +105,12 @@ export const useTelemetryStore = defineStore('Telemetry', {
     eventData: ref(),
     detailEventData: ref(),
     statusDeviceDetail: ref({}),
-    deviceDataLogs: ref('')
+    deviceDataLogs: ref(''),
+    statusExport: ref({
+      isError: null,
+      message: null,
+      code: null
+    })
   }),
   actions: {
     async getTelemetryDetail(serialNumber) {
@@ -156,6 +162,42 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.getTelemetryHistoryStatus.code = err.response.data.status
         this.getTelemetryHistoryStatus.message = JSON.stringify(err.response.data.data)
         this.getTelemetryHistoryStatus.isError = true
+        return err
+      }
+    },
+    async exportTemetryHistory(sn, params) {
+      try {
+        const res = await telemetryAPI.getTelemetryHistory(sn, params)
+        this.exportData = Object.values(res.data.telemetries)[0]
+        this.exportData.map((data) => {
+          data._time = moment(data._time).format('MM/DD/YYYY HH:mm:ss')
+        })
+
+        const headers = Object.keys(this.exportData[0]).join(',')
+        const rows = this.exportData.map((obj) => Object.values(obj).join(','))
+        const csvContent = [headers, ...rows].join('\n')
+
+        const now = new Date()
+        const isoTimestamp = now.toISOString().replace(/[:.]/g, '_')
+
+        const filename = `${isoTimestamp}_telemetry_historical.csv`
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+        const link = document.createElement('a')
+        link.href = URL.createObjectURL(blob)
+        link.setAttribute('download', filename)
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        this.statusExport.message = 'Export data report successfully'
+        this.statusExport.code = 200
+        this.statusExport.isError = false
+      } catch (err) {
+        console.error(err)
+        this.statusExport.isError = true
+        this.statusExport.message = err.response.data.message
+        this.statusExport.code = err.response.data.statusExport
         return err
       }
     },
@@ -290,7 +332,6 @@ export const useTelemetryStore = defineStore('Telemetry', {
 
         this.nodesData = nodes
         this.nodesData.map((data) => {
-
           let parsedTime
 
           if (moment(data._time, 'MM/DD/YYYY, h:mm:ss A', true).isValid()) {
@@ -307,7 +348,6 @@ export const useTelemetryStore = defineStore('Telemetry', {
           data.temperature = data.temperature.toFixed(1)
           data.uptime = formatUptime(data.uptime)
           data.rssi = Math.floor(rssiToDbm(data.rssi))
-
         })
 
         if (this.totalGateways === 0) {

@@ -167,6 +167,8 @@ async function loadHistoricalData() {
     queryParams.endTime = new Date(endDate.value + 'T' + endTime.value).toISOString()
     await telemetryStore.getTelemetryHistory(props.id, queryParams)
   }
+
+  setTimeout(closeNotification, 5000)
 }
 
 async function exportHistoricalData() {

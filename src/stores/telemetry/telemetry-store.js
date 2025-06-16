@@ -330,6 +330,12 @@ export const useTelemetryStore = defineStore('Telemetry', {
           data.rssi = Math.floor(rssiToDbm(data.rssi))
         })
 
+        this.gatewaysData.sort((a, b) => {
+          if (a.status === 'OFFLINE' && b.status === 'ONLINE') return -1
+          if (a.status === 'ONLINE' && b.status === 'OFFLINE') return 1
+          return 0
+        })
+
         this.nodesData = nodes
         this.nodesData.map((data) => {
           let parsedTime
@@ -348,6 +354,12 @@ export const useTelemetryStore = defineStore('Telemetry', {
           data.temperature = data.temperature.toFixed(1)
           data.uptime = formatUptime(data.uptime)
           data.rssi = Math.floor(rssiToDbm(data.rssi))
+        })
+
+        this.nodesData.sort((a, b) => {
+          if (a.status === 'OFFLINE' && b.status === 'ONLINE') return -1
+          if (a.status === 'ONLINE' && b.status === 'OFFLINE') return 1
+          return 0
         })
 
         if (this.totalGateways === 0) {

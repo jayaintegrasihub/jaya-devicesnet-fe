@@ -279,10 +279,19 @@ export const useTelemetryStore = defineStore('Telemetry', {
         this.statusDeviceDetail.temperature = this.statusDeviceDetail.temperature.toFixed(1)
         this.statusDeviceDetail.uptime = formatUptime(this.statusDeviceDetail.uptime)
         this.statusDeviceDetail.rssi = Math.floor(rssiToDbm(this.statusDeviceDetail.rssi))
+
+        const now = new Date()
+        const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000)
         this.deviceDataLogs = convertToArray(this.detailEventData.telemetry)
+        this.deviceDataLogs = this.deviceDataLogs.filter((item) => {
+          const cleanTimestamp = item.timestamp.replace(/\s*,\s*/, 'T')
+          const date = new Date(cleanTimestamp)
+          return date >= oneHourAgo
+        })
         this.deviceDataLogs.map((data) => {
           data.timestamp = moment(data.timestamp).format('MM/DD/YYYY , HH:mm:ss')
         })
+
         this.dataTags = Object.keys(this.detailEventData.telemetry)
       }
     },

@@ -3,6 +3,7 @@ name: Jaya Devicesnet FE Deployment
 on:
   push:
     branches: [ "ubs-build-hollow" ]
+  workflow_dispatch:
 
 jobs:
 

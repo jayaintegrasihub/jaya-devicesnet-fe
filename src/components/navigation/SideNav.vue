@@ -93,6 +93,7 @@
         :isExpanded="isExpanded"
         :isActive="isDevicesManagementActive"
         :route="{ name: 'devicesManagement' }"
+        v-if="role === 'admin'"
         menuName="Devices Provisioning"
         path="M21.15 5.87273L12.9 1.3568C12.6243 1.20506 12.3147 1.12549 12 1.12549C11.6853 1.12549 11.3757 1.20506 11.1 1.3568L2.85 5.87273C2.5548 6.03425 2.3085 6.27224 2.13695 6.56173C1.9654 6.85122 1.87492 7.18154 1.875 7.51805V16.4824C1.87492 16.8189 1.9654 17.1492 2.13695 17.4387C2.3085 17.7282 2.5548 17.9662 2.85 18.1277L11.1 22.6437C11.3756 22.7956 11.6853 22.8752 12 22.8752C12.3147 22.8752 12.6244 22.7956 12.9 22.6437L21.15 18.1277C21.4452 17.9662 21.6915 17.7282 21.863 17.4387C22.0346 17.1492 22.1251 16.8189 22.125 16.4824V7.51805C22.1251 7.18154 22.0346 6.85122 21.863 6.56173C21.6915 6.27224 21.4452 6.03425 21.15 5.87273ZM12 3.42867L18.75 7.12523L12 10.819L5.25 7.12523L12 3.42867ZM4.125 9.0743L10.875 12.768V19.9559L4.125 16.2602V9.0743ZM13.125 19.9559V12.768L19.875 9.0743V16.2602L13.125 19.9559Z"
       />
@@ -106,6 +107,7 @@
       <SideNavIcon
         :isExpanded="isExpanded"
         :isActive="isMasterDataActive"
+        v-if="role === 'admin'"
         :route="{ name: 'masterData' }"
         menuName="Master Data"
       >
@@ -147,6 +149,8 @@ import { useThemeStore } from '@/stores/theme'
 import { storeToRefs } from 'pinia'
 import { useLocalStorage } from '@vueuse/core'
 const { isDark } = storeToRefs(useThemeStore())
+
+const role = localStorage.getItem('auth.role')
 
 const props = defineProps({
   isDashboardActive: {

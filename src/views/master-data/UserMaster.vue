@@ -109,7 +109,7 @@ async function deleteItem() {
   modalActive.value = true
   await delay(1000)
   closeNotification()
-  usersStore.getUser()
+  usersStore.getUsers()
 }
 
 //edit type

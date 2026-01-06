@@ -35,6 +35,9 @@ const { tenants } = storeToRefs(useTenantsStore())
 //form data
 const listTenants = ref([''])
 const password = ref('')
+const passwordType = ref(false)
+const confirmPasswordType = ref(false)
+
 const description = ref('')
 //form control
 function addTenant() {
@@ -55,12 +58,13 @@ let submitClicked = 0
 const schema = yup.object({
   username: yup.string().required().label(' '),
   email: yup.string().required().label(' ').email(),
-  password: yup.string().required().label(' '),
+  password: yup.string().required().label(' ').min(8),
+  confirmPassword: yup.string().required().label(' ').min(8),
   role: yup.string().required()
 })
 
 const schemaEditUser = yup.object({
-  password: yup.string().required().label(' ')
+  password: yup.string().label(' ')
 })
 
 const onSubmit = async (values, { resetForm }) => {
@@ -69,6 +73,7 @@ const onSubmit = async (values, { resetForm }) => {
   const newTenants = listTenants.value.map((data) => data.replace(/\s/g, ''))
   newValues.tenantIds = newTenants
 
+  console.log(newValues)
   submitClicked = ++submitClicked
   if (submitClicked === 1) {
     submitLabel = 'the data entered is correct?'
@@ -80,6 +85,7 @@ const onSubmit = async (values, { resetForm }) => {
     submitClicked = 0
     modalActive.value = true
     if (status.value.isError) {
+      await delay(1500)
       closeNotification()
     } else {
       resetForm()
@@ -146,6 +152,7 @@ const onEdit = async (values, { resetForm }) => {
     submitClicked = 0
     modalActive.value = true
     if (status.value.isError) {
+      await delay(1500)
       closeNotification()
     } else {
       resetForm()
@@ -247,13 +254,76 @@ const onEdit = async (values, { resetForm }) => {
         <form @submit="handleSubmit($event, onSubmit)" class="form-wrapper">
           <BaseInput name="username" type="text" placeholder="Username" label="Userame" required />
           <BaseInput name="email" type="email" placeholder="Email" label="Email" required />
-          <BaseInput
-            name="password"
-            type="password"
-            placeholder="Password"
-            label="Password"
-            required
-          />
+          <div style="position: relative">
+            <BaseInput
+              name="password"
+              :type="passwordType ? 'text' : 'password'"
+              placeholder="your password"
+              class="outlined"
+              label="Password"
+            />
+            <div style="position: absolute; top: 35%; right: 15px; transform: translatY(-50%)">
+              <input
+                class="cursor-pointer hidden w-[30px]"
+                id="show-password"
+                type="checkbox"
+                v-model="passwordType"
+              />
+              <label class="cursor-pointer" for="show-password">
+                <img
+                  v-if="!passwordType"
+                  alt="aid logo"
+                  class="w-[24px]"
+                  src="../../assets/eye-open.svg"
+                  width="200"
+                  height="200"
+                />
+                <img
+                  v-if="passwordType"
+                  alt="aid logo"
+                  class="w-[24px]"
+                  src="../../assets/eye-close.svg"
+                  width="200"
+                  height="200"
+                />
+              </label>
+            </div>
+          </div>
+          <div style="position: relative">
+            <BaseInput
+              name="confirmPassword"
+              :type="confirmPasswordType ? 'text' : 'password'"
+              placeholder="enter confirm password"
+              class="outlined"
+              label="Confirm Password"
+            />
+            <div style="position: absolute; top: 35%; right: 15px; transform: translatY(-50%)">
+              <input
+                class="cursor-pointer hidden w-[30px]"
+                id="show-confirmPassword"
+                type="checkbox"
+                v-model="confirmPasswordType"
+              />
+              <label class="cursor-pointer" for="show-confirmPassword">
+                <img
+                  v-if="!confirmPasswordType"
+                  alt="aid logo"
+                  class="w-[24px]"
+                  src="../../assets/eye-open.svg"
+                  width="200"
+                  height="200"
+                />
+                <img
+                  v-if="confirmPasswordType"
+                  alt="aid logo"
+                  class="w-[24px]"
+                  src="../../assets/eye-close.svg"
+                  width="200"
+                  height="200"
+                />
+              </label>
+            </div>
+          </div>
           <div class="input-wrapper border-label-secondary">
             <label for="role" class="text-[12px] font-semibold select-none text-label-primary"
               >Role</label
@@ -324,13 +394,41 @@ const onEdit = async (values, { resetForm }) => {
       <h1 class="text-xl text-label-primary">Edit User</h1>
       <VeeForm :validation-schema="schemaEditUser" v-slot="{ handleSubmit }" as="div" ref="form">
         <form @submit="handleSubmit($event, onEdit)" class="form-wrapper">
-          <BaseInput
-            v-model="password"
-            name="password"
-            type="password"
-            placeholder="New password"
-            label="New Password"
-          />
+          <div style="position: relative">
+            <BaseInput
+              name="password"
+              :type="password ? 'text' : 'password'"
+              placeholder="your password"
+              class="outlined"
+              label="Password"
+            />
+            <div style="position: absolute; top: 35%; right: 15px; transform: translatY(-50%)">
+              <input
+                class="cursor-pointer hidden w-[30px]"
+                id="show-password"
+                type="checkbox"
+                v-model="password"
+              />
+              <label class="cursor-pointer" for="show-password">
+                <img
+                  v-if="!password"
+                  alt="aid logo"
+                  class="w-[24px]"
+                  src="../../assets/eye-open.svg"
+                  width="200"
+                  height="200"
+                />
+                <img
+                  v-if="password"
+                  alt="aid logo"
+                  class="w-[24px]"
+                  src="../../assets/eye-close.svg"
+                  width="200"
+                  height="200"
+                />
+              </label>
+            </div>
+          </div>
           <div class="groups flex flex-col gap-2">
             <p class="label">Tenants</p>
             <div class="input-wrapper-tenants" v-for="(value, index) in listTenants" :key="index">

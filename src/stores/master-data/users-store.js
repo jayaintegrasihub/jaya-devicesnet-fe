@@ -65,7 +65,8 @@ export const useUsersStore = defineStore('users', {
         console.error(err)
         this.createUserLoading = false
         this.status.isError = true
-        this.status.message = err.response.data.error
+        this.status.message =
+          err.response.data.data.message || JSON.stringify(err.response.data.data)
         this.status.code = err.response.data.status
         return err
       }
@@ -81,7 +82,7 @@ export const useUsersStore = defineStore('users', {
       } catch (err) {
         console.error(err)
         this.deleteUserLoading = false
-        this.status.message = err.response.data.error
+        this.status.message = JSON.stringify(err.response.data.data)
         this.status.code = err.response.data.status
         return err
       }
@@ -97,7 +98,7 @@ export const useUsersStore = defineStore('users', {
       } catch (err) {
         console.error(err)
         this.editUserLoading = false
-        this.status.message = err.response.data.error
+        this.status.message = JSON.stringify(err.response.data.data)
         this.status.code = err.response.data.status
         return err
       }

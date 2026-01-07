@@ -18,8 +18,20 @@ const router = createRouter({
     {
       path: '/devices',
       name: 'devicesManagement',
-      meta: { requiresAuth: true },
+      meta: {
+        requiresAuth: true,
+        roles: ['admin']
+      },
       component: () => import('../views/devices/DevicesManagement.vue')
+    },
+    {
+      path: '/master-data',
+      name: 'masterData',
+      meta: {
+        requiresAuth: true,
+        roles: ['admin']
+      },
+      component: () => import('../views/master-data/MasterData.vue')
     },
     {
       path: '/reports',
@@ -27,12 +39,7 @@ const router = createRouter({
       meta: { requiresAuth: true },
       component: () => import('../views/report/Report.vue')
     },
-    {
-      path: '/master-data',
-      name: 'masterData',
-      meta: { requiresAuth: true },
-      component: () => import('../views/master-data/MasterData.vue')
-    },
+
     {
       path: '/device-detail/:id',
       name: 'deviceDetail',
@@ -57,18 +64,25 @@ const router = createRouter({
   ]
 })
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach((to, from, next) => {
   document.title = 'Telemetric | DevicesNet'
-  if (to.meta.requiresAuth && !localStorage.getItem('auth.accessToken')) {
-    next({ name: 'login' })
-  } else if (
-    (to.meta.requiresAuth && localStorage.getItem('auth.accessToken')) ||
-    to.meta.freeAccess
-  ) {
-    next()
-  } else if (!to.meta.requiresAuth && localStorage.getItem('auth.accessToken')) {
-    next({ name: 'devicesManagement' })
-  } else next()
+
+  const token = localStorage.getItem('auth.accessToken')
+  const role = localStorage.getItem('auth.role')
+
+  if (to.meta.requiresAuth && !token) {
+    return next({ name: 'login' })
+  }
+
+  if (to.meta.roles && !to.meta.roles.includes(role)) {
+    return next({ name: 'dashboard' })
+  }
+
+  if (!to.meta.requiresAuth && token) {
+    return next({ name: 'dashboard' })
+  }
+
+  next()
 })
 
 export default router

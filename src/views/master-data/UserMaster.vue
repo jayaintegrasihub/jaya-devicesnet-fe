@@ -64,16 +64,18 @@ const schema = yup.object({
 })
 
 const schemaEditUser = yup.object({
-  password: yup.string().label(' ')
+  password: yup.string().required().label(' ').min(8),
+  confirmPassword: yup.string().required().label(' ').min(8)
 })
 
 const onSubmit = async (values, { resetForm }) => {
   let newValues = values
 
-  const newTenants = listTenants.value.map((data) => data.replace(/\s/g, ''))
-  newValues.tenantIds = newTenants
+  if (newValues.role !== 'admin') {
+    const newTenants = listTenants.value.map((data) => data.replace(/\s/g, ''))
+    newValues.tenantIds = newTenants
+  }
 
-  console.log(newValues)
   submitClicked = ++submitClicked
   if (submitClicked === 1) {
     submitLabel = 'the data entered is correct?'
@@ -147,7 +149,6 @@ const onEdit = async (values, { resetForm }) => {
     loadingStore.startLoading()
     await usersStore.editUser(selectedEditItem.value.id, newValues)
     loadingStore.stopLoading()
-    isEdit.value = false
     submitLabel = 'Submit'
     submitClicked = 0
     modalActive.value = true
@@ -156,6 +157,7 @@ const onEdit = async (values, { resetForm }) => {
       closeNotification()
     } else {
       resetForm()
+      isEdit.value = false
       listTenants.value = ['']
       await delay(1000)
       closeNotification()
@@ -163,6 +165,8 @@ const onEdit = async (values, { resetForm }) => {
     }
   }
 }
+
+const user = localStorage.getItem('auth.user')
 </script>
 <template>
   <DeleteConfirmationModal
@@ -221,6 +225,7 @@ const onEdit = async (values, { resetForm }) => {
               />
             </svg>
             <svg
+              v-if="item.username !== user"
               class="cursor-pointer hover:scale-110 transition-transform duration-200"
               width="24"
               height="24"
@@ -336,7 +341,7 @@ const onEdit = async (values, { resetForm }) => {
             </select>
           </div>
 
-          <div class="groups flex flex-col gap-2">
+          <div class="groups flex flex-col gap-2" v-if="values.role !== 'admin'">
             <p class="label">Tenants</p>
             <div class="input-wrapper-tenants" v-for="(value, index) in listTenants" :key="index">
               <select
@@ -429,7 +434,43 @@ const onEdit = async (values, { resetForm }) => {
               </label>
             </div>
           </div>
-          <div class="groups flex flex-col gap-2">
+          <div style="position: relative">
+            <BaseInput
+              name="confirmPassword"
+              :type="confirmPasswordType ? 'text' : 'password'"
+              placeholder="enter confirm password"
+              class="outlined"
+              label="Confirm Password"
+            />
+            <div style="position: absolute; top: 35%; right: 15px; transform: translatY(-50%)">
+              <input
+                class="cursor-pointer hidden w-[30px]"
+                id="show-confirmPassword"
+                type="checkbox"
+                v-model="confirmPasswordType"
+              />
+              <label class="cursor-pointer" for="show-confirmPassword">
+                <img
+                  v-if="!confirmPasswordType"
+                  alt="aid logo"
+                  class="w-[24px]"
+                  src="../../assets/eye-open.svg"
+                  width="200"
+                  height="200"
+                />
+                <img
+                  v-if="confirmPasswordType"
+                  alt="aid logo"
+                  class="w-[24px]"
+                  src="../../assets/eye-close.svg"
+                  width="200"
+                  height="200"
+                />
+              </label>
+            </div>
+          </div>
+
+          <div class="groups flex flex-col gap-2" v-if="selectedEditItem.role !== 'admin'">
             <p class="label">Tenants</p>
             <div class="input-wrapper-tenants" v-for="(value, index) in listTenants" :key="index">
               <select

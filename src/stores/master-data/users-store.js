@@ -93,12 +93,15 @@ export const useUsersStore = defineStore('users', {
         const res = await usersApi.editUser(id, data)
         console.log(res)
         this.editUserLoading = false
+        this.status.isError = false
         this.status.message = 'Data Updated'
         this.status.code = res.data.status
       } catch (err) {
         console.error(err)
         this.editUserLoading = false
-        this.status.message = JSON.stringify(err.response.data.data)
+        this.status.isError = true
+        this.status.message =
+          err.response.data.data.message || JSON.stringify(err.response.data.data)
         this.status.code = err.response.data.status
         return err
       }

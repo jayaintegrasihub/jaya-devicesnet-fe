@@ -14,11 +14,27 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v3
 
-      - name: Create environment production and build
+      # The Dockerfile builds the app itself now, so there is no npm build on
+      # the runner. But Vite inlines VITE_APP_API_URL at BUILD time, so the
+      # value has to be handed to `docker build` -- and .dockerignore excludes
+      # .env* from the build context, so writing .env.production is not enough.
+      # Read it out of the existing secret and pass it as a build arg.
+      - name: Resolve the production API URL
         run: |
           echo "${{ secrets.ENV_FILE_PRODUCTION }}" > .env.production
-          npm install
-          npm run build
+          url=$(grep -aE '^[[:space:]]*VITE_APP_API_URL[[:space:]]*=' .env.production \
+                | tail -n1 | cut -d= -f2- | tr -d '\r' | tr -d "\"'" \
+                | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+          if [ -z "$url" ]; then
+            echo "::error::VITE_APP_API_URL not found in the ENV_FILE_PRODUCTION secret"
+            exit 1
+          fi
+          # Every call site concatenates directly (`${VITE_APP_API_URL}auth/refresh`),
+          # so a missing trailing slash silently breaks every request.
+          case "$url" in */) ;; *) url="$url/" ;; esac
+          echo "Building against: $url"
+          echo "VITE_APP_API_URL=$url" >> "$GITHUB_ENV"
+          rm -f .env.production
       
       - name: Log in to Docker Hub
         uses: docker/login-action@f4ef78c080cd8ba55a85445d5b36e214a81df20a
@@ -40,6 +56,21 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            VITE_APP_API_URL=${{ env.VITE_APP_API_URL }}
+
+      # A wrong or missing value cannot be corrected at runtime, and shows up
+      # only as failing requests in the browser. Catch it here instead.
+      - name: Verify the API URL was baked into the bundle
+        run: |
+          image=$(echo "${{ steps.meta.outputs.tags }}" | head -n1)
+          docker pull -q "$image"
+          if ! docker run --rm --entrypoint sh "$image" -c \
+                 "grep -rqF '${{ env.VITE_APP_API_URL }}' /app/assets/*.js"; then
+            echo "::error::${{ env.VITE_APP_API_URL }} is not present in the built bundle"
+            exit 1
+          fi
+          echo "bundle targets ${{ env.VITE_APP_API_URL }}"
 
   pull_the_registery:
     needs: push_to_registry
